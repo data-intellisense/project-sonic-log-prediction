@@ -5,3 +5,4 @@
 /data/*.h5
 /data/
 data/
+__pycache__
