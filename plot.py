@@ -14,7 +14,7 @@ def plot_logs(
     plot_return=False,
     plot_save_file_name=None,
     plot_save_path=None,
-    plot_save_format=["png", "html"],
+    plot_save_format=None,  # availabe format: ["png", "html"]
 ):
 
     df = df.copy()
@@ -26,7 +26,9 @@ def plot_logs(
     fig = go.Figure()
 
     for col in df.columns:
-        if col != "DEPT":
+
+        # do not plots in the below list:
+        if col not in ["DEPT", "TEND", "TENR"]:
             fig.add_trace(go.Scatter(x=df[col], y=df["DEPT"], name=col))
 
     fig.update_layout(
