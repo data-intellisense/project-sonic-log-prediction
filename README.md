@@ -1,5 +1,5 @@
 
-# Machine Learning Challenge organized by SPE-GCS in 2021
+# SPE-GCS Machine Learning Challenge 2021
 
 ## How to use this repository:
 a) clone this repository
@@ -14,20 +14,18 @@ You can import plot_logs function from plot.py to plot the logs in your code! Pl
 
 ## Project blue-print and tasks:
 
-a) Explore data to answer below questions:
+a) Explore data to answer below questions
 
-    1) Which logs to use as predictors? (porosity, gamma ray, resisitivity, compressional slowness)
-
-    2) Which logs are available in test las? (to ask/confirm competition committee)
+    1) Which logs to use as predictors?  Which logs are available in test las? (porosity, gamma ray, resisitivity, compressional slowness) (to ask/confirm competition committee)
     
-    3) Which are duplciate logs with different mnemonics but for the same log? (e.g. resistivity logs) What to do with them?
+    2) Which are duplciate logs with different mnemonics but for the same log? (e.g. resistivity logs) What to do with them?
 
     Outputs: 
     1) Dataset(s) in pandas.DataFrame with organized predictors (DTCO etc.) and response (DTSM). (we won't split to train/test as we will do cross validation for model evaluation)
 
     2) A function to process any las file to output desired predictors
 
-b) Test regression algorithms to answer below questions:
+b) Test regression algorithms to answer below questions
 
     1) Which scikit-learn works best based on rmse? (linear regression, ridge regression, lass regression, support vector regression, gradient boosting, XGB, random forest etc.)
 
