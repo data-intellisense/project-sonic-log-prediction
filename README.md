@@ -4,7 +4,7 @@
 ## How to use this repository:
 a) clone this repository
 
-b) create a 'data/las/' folder and store all .las files in the folder
+b) create a 'data/las/' folder and store all .las files in the folder. The las or h5 files are too large to upload to github.
 
 c) run the load.py to create a .h5 file which stores the curves and data info
 
@@ -12,7 +12,7 @@ d) run data_explore.py to explore data and plot logs
 
 You can import plot_logs function from plot.py to plot the logs in your code! Plotly package needs to be installed to use the plot_logs function.
 
-## Project blue-print and tasks:
+## Project blue-print and tasks
 
 a) Explore data to answer below questions
 
