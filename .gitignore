@@ -1,4 +1,6 @@
 .vscode
+*.las
+*.h5
 /data/las/*.las
 /data/*.h5
 /data/
