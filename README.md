@@ -37,6 +37,14 @@ b) Test regression algorithms to answer below questions
     1) Final model/algorithm 
     2) Predictions vs. actual data in Excel
 
+c) Potential problems
+    
+    1) Various log resolution (sync resolution)
+    2) GR not helpful? How about resistivity? 
+    3) Different depth/formations have different model? 
+    4) Misssing values? 
+    5) Anomaly values?
+
 ## Project timeline
 
     Committee schedule
