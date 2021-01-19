@@ -5,4 +5,5 @@
 /data/*.h5
 /data/
 data/
+! grouped_mnemonics.csv
 __pycache__
