@@ -31,9 +31,15 @@ b) Test regression algorithms to answer below questions
 
     0) Baseline model: DTS/DTC ratio, two empirical models (Castagna et al. 1985, Han et al. 1986)
 
-    1) Which scikit-learn works best based on rmse? Focus on SVR (linear regression, ridge regression, lass regression, support vector regression, gradient boosting, XGB, random forest etc.)
+    1) Which scikit-learn works best based on rmse? Focus on SVR 
+        linear regression, 
+        ridge regression, lass regression, 
+        support vector regression, 
+        gradient boosting, XGB, 
+        random forest etc.
 
-    2) Which neural network algorithm works best based on rmse? Try both c-RNN, ANN first as recommended in the paper
+    2) Which neural network algorithm works best based on rmse? 
+        Try both c-RNN, ANN first as recommended in the paper
 
     3) Would model stacking improve the model beyond simple average of predictions?
 
@@ -48,6 +54,7 @@ c) Potential data problems
     3) Different depth/formations have different model? 
     4) Misssing values? 
     5) Anomaly values?
+    6) Correct units
 
 d) Coding format
 
