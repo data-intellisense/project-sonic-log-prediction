@@ -1,9 +1,4 @@
 .vscode
 *.las
 *.h5
-/data/las/*.las
-/data/*.h5
-/data/
-data/
-! grouped_mnemonics.csv
 __pycache__
