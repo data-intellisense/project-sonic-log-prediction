@@ -1,4 +1,7 @@
 .vscode
 *.las
 *.h5
-__pycache__
+**__pycache__
+
+.git
+.gitignore

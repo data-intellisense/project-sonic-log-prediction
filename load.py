@@ -6,7 +6,7 @@ import pickle
 import random
 import time
 from itertools import count
-
+from plot import plot_logs
 import lasio
 import numpy as np
 import pandas as pd
@@ -27,8 +27,9 @@ for curve in las.curves:
 # store las as pandas dataframe for quick analysis
 # 'DEPT' was converted to df.index automatically, add 'DEPT' column back later
 df = las.df()
+df["DEPT"] = df.index
 df.describe()
-
+plot_logs(df)
 
 #%% convert las.curves info to df for better reading
 
