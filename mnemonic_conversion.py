@@ -1,6 +1,8 @@
 import pandas as pd
 import pickle
 import lasio
+from welly import well
+from welly import curve
 
 df = pd.read_csv("data/grouped_mnemonics_corrected.csv")
 df.sample(10)
@@ -19,3 +21,8 @@ df.head()
 # convert different mnemonics to consistent mnemonic
 df.columns = df.columns.map(mnemonic_dict)
 df.head()  # column names that are NaN probably not a good feature so could be dropped
+
+
+well_las = well.Well()
+well_las.add_curves_from_las(las_path, remap=mnemonic_dict)
+well_las

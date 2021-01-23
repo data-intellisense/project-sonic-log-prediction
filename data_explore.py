@@ -2,6 +2,7 @@ from plot import plot_logs
 import pandas as pd
 import random
 import numpy as np
+import welly
 
 # load the file
 las_data = pd.HDFStore("data/las_data.h5")
