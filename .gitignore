@@ -1,7 +1,10 @@
 .vscode
-*.las
-*.h5
+**.las
+**.h5
 **__pycache__
 
 .git
 .gitignore
+*.pickle
+! alias_dict.pickle
+! *.csv
