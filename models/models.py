@@ -4,7 +4,7 @@ import pandas as pd
 # you model should be a function like below
 
 
-def blackbox_model(las=None):
+def ratio_model(las=None):
     """
     input: path to any las file
     output: a pd.DataFrame with the length of input las, columns = ['DEPT', 'DTSM']
