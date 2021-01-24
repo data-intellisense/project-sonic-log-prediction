@@ -1,10 +1,17 @@
+import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
+from plotly.subplots import make_subplots
+from util import get_mnemonic, get_alias
+
+import random 
+import pickle 
+with open('data/alias_dict.pickle', 'rb') as f:
+    alias_dict = pickle.load(f)
 
 pio.renderers.default = "browser"
-
 
 def plot_logs(
     df,
@@ -65,3 +72,96 @@ def plot_logs(
 
     if plot_return:
         return fig
+
+
+#%% test plot logs in various columns
+
+def plot_logs_columns(
+    df,
+    well_name="Well",
+    DTSM_only=True,
+    plot_show=True,
+    plot_return=False,
+    plot_save_file_name=None,
+    plot_save_path=None,
+    plot_save_format=None,  # availabe format: ["png", "html"]
+):
+
+    df = df.copy()
+
+    # determine how many columns for grouped curves
+    columns = df.columns.map(alias_dict)
+    tot_cols = [['DTCO', 'DTSM'],                   #  row=1, col=1
+                ['RHOB'],                           #  row=1, col=2
+                ['DPHI', 'NPHI', 'RPHI', 'SPHI'],   #  row=1, col=3
+                ['GR'],                             #  row=1, col=4
+                ['AT', 'RT'],                       #  row=1, col=5
+                ['CALI']]                           #  row=1, col=6
+    
+    num_of_cols = 1    
+    tot_cols_new = [] # update the tot_cols if some curves are missing
+    for cols in tot_cols:
+        if any([(i in columns) for i in cols]):
+            tot_cols_new.append(cols)
+            num_of_cols +=1    
+
+    # plot
+    fig = make_subplots(rows=1, cols=num_of_cols, subplot_titles=['-'.join(j) for j in tot_cols_new], shared_yaxes=True)
+
+    for col_old in df.columns:
+
+        # find the mnemonic for alias
+        col_new = get_mnemonic(col_old, alias_dict=alias_dict)
+        try:            
+            col_id = [i+1 for i, v in enumerate(tot_cols_new) if col_new in v][0]
+        except:
+            col_id = num_of_cols
+               
+        # print(f'col_old: {col_old}, col_new: {col_new}, col_id: {col_id}')
+        if 'TENS' not in col_new:
+            fig.add_trace(go.Scatter(x=df[col_old], y=df.index, name=col_old), row=1, col=col_id)
+
+    fig.update_layout(        
+        showlegend=True,        
+        title=dict(text=well_name, font=dict(size=12)),
+        yaxis=dict(autorange="reversed", title="Depth, ft"),
+        font=dict(size=18),
+        legend=dict(orientation='h',
+                    y=1.07, yanchor='middle',
+                    x=0.5, xanchor='center',
+                    font=dict(size=12)),
+        template='plotly',        
+        width=3000,
+        height=1500,
+    )
+
+    # show and save plot
+    if plot_show:
+        fig.show()
+
+    # save the figure if plot_save_format is provided
+    if plot_save_format is not None:
+
+        if plot_save_file_name is None:
+            plot_save_file_name = f"plot-{str(np.random.random())[2:]}"
+
+        if plot_save_path is not None:
+            plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
+            print(f"\nPlots are saved at path: {plot_save_path}!")
+        else:
+            print(f"\nPlots are saved at the same path as current script!")
+
+        for fmt in plot_save_format:
+
+            plot_file_name_ = f"{plot_save_file_name}.{fmt}"
+
+            if fmt in ["png"]:
+                fig.write_image(plot_file_name_)
+            if fmt in ["html"]:
+                fig.write_html(plot_file_name_)
+
+    if plot_return:
+        return fig
+
+
+    
