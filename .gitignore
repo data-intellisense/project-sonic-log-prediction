@@ -8,3 +8,5 @@
 *.pickle
 ! alias_dict.pickle
 ! *.csv
+
+/plots/

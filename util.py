@@ -1,5 +1,11 @@
-
+import numpy as np
 import pickle
+# for CV_weighted
+from sklearn.model_selection import KFold
+from sklearn.base import clone
+
+# for metrics
+from sklearn.metrics import mean_squared_error
 
 #%% mnemonics dictionary
 with open('data/alias_dict.pickle', 'rb') as f:
@@ -132,3 +138,46 @@ def get_features_df(df, features=None):
         print('No DTSM in df for get_features_df!')
 
     return df[col_features]
+
+def sample_weight_calc(length=1, decay=0.999):
+
+    assert all([decay > 0, decay <= 1])
+    assert all([length >= 1, type(length) is int])
+    return decay ** np.arange(length, 0, step=-1)
+
+def CV_weighted(model, X, y, weights=None, cv=10):
+    """
+    model : a sci-kit learn estimator
+    X : a numpy array of shape (n_samples, n_features)
+    y : numpy array of shape (n_samples,)
+    weights : sample weights
+    cv : TYPE, optional, The default is 10.
+    metrics : TYPE, optional, The default is [mean_squared_error].
+    Returns: scores
+    """
+
+    if weights is None:
+        weights = np.ones(len(X))
+
+    kf = KFold(n_splits=cv)
+    kf.get_n_splits(X)
+    scores = []
+    for train_index, test_index in kf.split(X):
+        model_clone = clone(model)
+                
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        weights_train, weights_test = weights[train_index], weights[test_index]
+
+        try:
+            model_clone.fit(X_train, y_train, sample_weight=weights_train)
+        except: 
+            # KNN, MLP does not accept sample_weight
+            model_clone.fit(X_train, y_train)
+        y_pred = model_clone.predict(X_test)
+
+        score = mean_squared_error(y_test, y_pred, sample_weight=weights_test)
+        
+        scores.append(score)
+
+    return np.mean(scores)

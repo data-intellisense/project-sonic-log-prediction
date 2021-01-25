@@ -1,11 +1,13 @@
 import pandas as pd
 import numpy as np
+import os
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.subplots import make_subplots
 from util import get_mnemonic, get_alias
 
+from sklearn.metrics import mean_squared_error
 import random 
 import pickle 
 with open('data/alias_dict.pickle', 'rb') as f:
@@ -164,4 +166,61 @@ def plot_logs_columns(
         return fig
 
 
+def plot_crossplot(y_actual, y_predict, text=None,
+    axis_range = 350,
+    plot_show=True,
+    plot_return=False,
+    plot_save_file_name=None,
+    plot_save_path=None,
+    plot_save_format=None,  # availabe format: ["png", "html"])
+):
     
+    assert len(y_actual)==len(y_predict)
+    rmse_test =  mean_squared_error(y_actual, y_predict)**0.5    
+    
+    y_pred_act = pd.DataFrame(np.c_[y_actual.reshape(-1,1), y_predict.reshape(-1,1)], columns=['Actual', 'Predict'])
+    abline = pd.DataFrame(np.c_[np.arange(axis_range).reshape(-1,1), np.arange(axis_range).reshape(-1,1)], columns=['Actual', 'Predict'])
+
+    if text is not None:
+        title_text = f'{text}, rmse_test:{rmse_test}'
+    else:
+        title_text = f'rmse_test:{rmse_test}'
+
+    fig = px.scatter(y_pred_act, x='Actual', y='Predict')
+    fig.add_traces(px.line(abline, x='Actual', y='Predict').data[0])
+    fig.update_layout(title=dict(text=title_text),
+                        width=1200,
+                        height=1200,
+                        xaxis_range=[0,axis_range],
+                        yaxis_range=[0,axis_range])
+    
+    # show and save plot
+    if plot_show:
+        fig.show()
+
+    # save the figure if plot_save_format is provided
+    if plot_save_format is not None:
+
+        if plot_save_file_name is None:
+            plot_save_file_name = f"plot-{str(np.random.random())[2:]}"
+
+        if plot_save_path is not None:
+            if not os.path.exists(plot_save_path):
+                os.mkdir(plot_save_path)
+
+            plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
+            print(f"\nPlots are saved at path: {plot_save_path}!")
+        else:
+            print(f"\nPlots are saved at the same path as current script!")
+
+        for fmt in plot_save_format:
+
+            plot_file_name_ = f"{plot_save_file_name}.{fmt}"
+
+            if fmt in ["png"]:
+                fig.write_image(plot_file_name_)
+            if fmt in ["html"]:
+                fig.write_html(plot_file_name_)
+
+    if plot_return:
+        return fig
