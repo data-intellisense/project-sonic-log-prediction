@@ -76,10 +76,6 @@ cords.to_csv('data/cords.csv')
 print(f'cords: \n{cords.head()}')
 print(f"\nSuccessfully loaded total {count_+1} las files!")
 print(f"Total run time: {time.time()-time_start: .2f} seconds")
-
-
-
-
         
 # test
 df1 = process_las().keep_valid_DTSM_only(df)
@@ -89,6 +85,7 @@ df1
 
 las_data_DTSM = pd.HDFStore("data/las_data_DTSM.h5")
 list_no_DTSM = []
+curve_info = []
 
 time_start = time.time()
 count_ = 0
@@ -96,6 +93,8 @@ for f in glob.glob("data/las/*.las"):
     f_name = f.split("/")[-1].split("\\")[-1][:-4]
     f_name = f"{count_:0>3}-{f_name}"
     print(f"Loading {count_}th las file: \t\t{f_name}.las")
+
+    curve_info.append([f"{count_:0>3}", f_name])
 
     las = read_las(f)    
     df = las.df()
@@ -111,6 +110,9 @@ las_data_DTSM.close()
 
 list_no_DTSM = pd.DataFrame(list_no_DTSM, columns=['las without DTSM'])
 list_no_DTSM.to_csv('data/list_no_DTSM.csv', index=True)
+
+curve_info = pd.DataFrame(curve_info, columns=['WellNo', 'WellName'])
+curve_info.to_csv('data/curve_info.csv', index=False)
 
 print(f"\nSuccessfully loaded total {count_+1} las files!")
 print(f"Total run time: {time.time()-time_start: .2f} seconds")
