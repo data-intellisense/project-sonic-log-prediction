@@ -2,6 +2,56 @@ import pickle
 
 from plot import plot_logs_columns
 
+#%% create alias_dict
+import pandas as pd
+import pickle
+import lasio
+
+df = pd.read_csv("data/grouped_mnemonics_corrected.csv")
+df.head(10)
+
+alias_dict = dict()
+for ix, m1, m2, _ in df.itertuples():
+    alias_dict[m1] = m2
+
+with open("data/alias_dict.pickle", "wb") as f:
+    pickle.dump(alias_dict, f)
+
+#%% create coordinate plot
+
+import pandas as pd
+import numpy as np
+import seaborn 
+
+import plotly.express as px
+import plotly.io as pio
+import plotly.graph_objects as go 
+
+pio.renderers.default = 'browser'
+
+# import cordinates
+cords = pd.read_csv('data/cords.csv', index_col=0)
+
+print(cords.sample(5))
+
+fig = go.Figure()
+fig.add_traces(go.Scatter(x=cords['Lon'], y=cords['Lat'], mode='markers', marker=dict(size=cords['STOP']/500),
+                    hoverinfo='text', hovertext = cords['Well']))
+fig.update_layout(xaxis = dict(title='Longitude'),
+                    yaxis = dict(title='Latitude'),
+                    title = dict(text='Size: Stop Depth'),
+                    font=dict(size=18))
+
+#%% test
+las_path = r"data/las/00a60e5cc262_TGS.las"
+df = lasio.read(las_path).df()
+print('before mnemonics conversion:', df.columns)
+
+# convert different mnemonics to consistent mnemonic
+df.columns = df.columns.map(alias_dict)
+print('after mnemonics conversion:', df.columns)
+
+
 #%% plot all las and save the plots
 
 if __name__ == '__main__':        

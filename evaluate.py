@@ -1,4 +1,4 @@
-#%% regressor evaluation
+#%% for evaluate models based on rmse
 
 import lasio
 from models.blackbox_model import blackbox_model
