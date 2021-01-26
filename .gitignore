@@ -6,7 +6,8 @@
 .git
 .gitignore
 *.pickle
-! alias_dict.pickle
-! *.csv
+!alias_dict.pickle
+!las_data_7features.pickle
+!*.csv
 
 /plots/
