@@ -1,5 +1,5 @@
-#%% this file load the each las data to dataframe and save as h5 format file
-# the resulting file is the .h5 file in /data/ folder.
+#%% this file load the each las data to dataframe and save them
+# the resulting files are in /data/ folder.
 
 import glob
 import pickle
