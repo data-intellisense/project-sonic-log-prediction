@@ -10,6 +10,7 @@ from util import get_mnemonic, get_alias
 from sklearn.metrics import mean_squared_error
 import random 
 import pickle 
+
 with open('data/alias_dict.pickle', 'rb') as f:
     alias_dict = pickle.load(f)
 
@@ -38,7 +39,7 @@ def plot_logs(
 
         # do not plots in the below list:
         if col not in ["DEPT", "TEND", "TENR"]:
-            fig.add_trace(go.Scatter(x=df[col], y=df["DEPT"], name=col))
+            fig.add_trace(go.Scatter(x=df[col], y=df.index, name=col))
 
     fig.update_layout(
         showlegend=True,
@@ -80,7 +81,7 @@ def plot_logs(
 
 def plot_logs_columns(
     df,
-    well_name="Well",
+    well_name="",
     DTSM_only=True,
     plot_show=True,
     plot_return=False,
@@ -114,7 +115,8 @@ def plot_logs_columns(
 
         # find the mnemonic for alias
         col_new = get_mnemonic(col_old, alias_dict=alias_dict)
-        try:            
+        try:
+            # find the index for which column to plot the curve            
             col_id = [i+1 for i, v in enumerate(tot_cols_new) if col_new in v][0]
         except:
             col_id = num_of_cols
@@ -134,7 +136,7 @@ def plot_logs_columns(
                     font=dict(size=12)),
         template='plotly',        
         width=3000,
-        height=1500,
+        height=1200,
     )
 
     # show and save plot
@@ -148,6 +150,11 @@ def plot_logs_columns(
             plot_save_file_name = f"plot-{str(np.random.random())[2:]}"
 
         if plot_save_path is not None:
+            if plot_save_path is not None:
+
+                if not os.path.exists(plot_save_path):
+                    os.mkdir(plot_save_path)
+
             plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
             print(f"\nPlots are saved at path: {plot_save_path}!")
         else:

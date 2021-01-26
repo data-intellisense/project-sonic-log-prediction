@@ -4,8 +4,9 @@ import pandas as pd
 import pickle
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
-from util import get_features_df, get_alias, get_mnemonic, CV_weighted
+from util import get_features_df, get_alias, get_mnemonic, CV_weighted, get_df_from_mnemonics
 from sklearn.preprocessing import RobustScaler
+import random 
 
 # models
 from sklearn.linear_model import RidgeCV as RCV
@@ -16,7 +17,7 @@ from sklearn.neural_network import MLPRegressor as MLP
 from xgboost import XGBRegressor as XGB
 from sklearn.ensemble import StackingRegressor as Stack
 
-from plot import plot_crossplot
+from plot import plot_logs_columns, plot_crossplot
 import plotly.express as px 
 import plotly.io as pio
 pio.renderers.default='browser'
@@ -190,3 +191,73 @@ for name, model in models.items():
                 plot_save_path='plots/DTCO-DTSM',
                 plot_save_format=['png'])
    
+#%% plot all las
+
+if __name__ == '__main__':        
+
+    with open('data/las_data_DTSM.pickle', 'rb') as f:
+        las_dict = pickle.load(f)
+
+    # plot some random las
+    key = random.choice(list(las_dict.keys()))
+    
+    if '001' in key:
+        plot_logs_columns(las_dict[key], 
+                            well_name=key,
+                            plot_show=True)
+                            # plot_return=False,
+                            # plot_save_file_name=key_,
+                            # plot_save_path='plots',
+                            # plot_save_format=['png', 'html'])
+
+    # # plot all las
+    # for key in las_dict.keys():
+        
+    #     plot_logs_columns(las_dict[key], 
+    #                     well_name=key,
+    #                     plot_show=False,
+    #                     plot_return=False,
+    #                     plot_save_file_name=key_,
+    #                     plot_save_path='plots',
+    #                     plot_save_format=['png', 'html'])
+
+#%% test get_mnemonics_from_df
+
+if __name__ == '__main__':
+
+    # load las_data_DTSM
+    with open('data/las_data.pickle', 'rb') as f:
+        las_data = pickle.load(f)
+
+    # load las_data_DTSM
+    with open('data/las_data_DTSM.pickle', 'rb') as f:
+        las_data_DTSM = pickle.load(f)
+
+    key = '001-00a60e5cc262_TGS'
+    df = las_data[key]
+    df.head()
+
+    xlabels_alias = []
+    ylabels_alias = []
+
+    target_mnemonics = ['DTCO', 'NPHI', 'GR', 'CALI', 'RT', 'DTSM']
+
+        
+    df2 = get_df_from_mnemonics(df, target_mnemonics=target_mnemonics)
+
+
+    plot_logs_columns(df, 
+                    plot_show=True, 
+                    DTSM_only=True,
+                    plot_return=False,
+                    plot_save_file_name=f'{key}-rawdata',
+                    plot_save_path='plot_demo',
+                    plot_save_format=['png', 'html'])
+                    
+    plot_logs_columns(df2, 
+                    plot_show=True, 
+                    DTSM_only=True,
+                    plot_return=False,
+                    plot_save_file_name=f'{key}-cleaneddata',
+                    plot_save_path='plot_demo',
+                    plot_save_format=['png', 'html'])

@@ -1,13 +1,19 @@
+#%% import lib
 import numpy as np
 import pickle
 # for CV_weighted
 from sklearn.model_selection import KFold
 from sklearn.base import clone
+import lasio 
+import pandas as pd 
 
 # for metrics
 from sklearn.metrics import mean_squared_error
 
+
 #%% mnemonics dictionary
+
+# get the alias_dict, required
 with open('data/alias_dict.pickle', 'rb') as f:
     alias_dict = pickle.load(f)
 
@@ -25,9 +31,11 @@ def get_mnemonic(alias = None, alias_dict=None):
     except:
         return ''
 
-if __name__ == '__main__':
-    print(get_alias('DPHI', alias_dict=alias_dict))
-    print(get_mnemonic(alias = 'GR', alias_dict=alias_dict))
+if __name__ == '__main__':    
+
+    print(get_alias('DTSM', alias_dict=alias_dict))
+
+    print(get_mnemonic(alias = 'MODT', alias_dict=alias_dict))
 
 #%% read las, return curves and data etc.
 
@@ -91,6 +99,9 @@ class process_las:
         # deep copy of df so manipulation here won't alter original df
         df = df.copy()
 
+        # keep only column names
+        # columns_old = df.columns.copy()
+
         # convert all alias to desired mnemonics
         df.columns = df.columns.map(alias_dict)                
 
@@ -98,11 +109,8 @@ class process_las:
         df = df.loc[:,df.columns.notnull()]
         #df.columns = df.columns.fillna('to_drop')
 
-        # drop columns with all na
-        df = df.dropna(axis=1, how='all')
-
         # attach suffix number to duplicate column names
-        df.columns = self.renumber_columns(df.columns)
+        # df.columns = self.renumber_columns(df.columns)
 
         # make sure only one 'DTSM' exist
         try:
@@ -110,17 +118,18 @@ class process_las:
         except:
             print("More than one 'DTSM' curve exist!")        
 
+        if 'DTSM' not in df.columns:
+            print('DTSM not in this las file!')
+
         # drop all empty rows in 'DTSM' column if there is a 'DTSM' column
-        try:
-            # if 'DTSM' in df.columns:
-            df = df.dropna(subset=['DTSM'])
-            return df  
-        except Exception as err:
-            print("No 'DTSM' curve in this dataset, only performed converting alias to mnemonics and dropping un-recognizable curves!")
-            
-#%% get_features_df
+        # if 'DTSM' in df.columns, dropp all rows with nan in DTSM column
+        df = df.dropna(subset=['DTSM'])
 
+        # drop other columns with all na
+        df = df.dropna(axis=1, how='all')
 
+        return df  
+        
 def get_features_df(df, features=None):
 
     assert isinstance(features, list), 'features must be a list of curve mnemonics'
@@ -181,3 +190,38 @@ def CV_weighted(model, X, y, weights=None, cv=10):
         scores.append(score)
 
     return np.mean(scores)
+
+
+#%% get_mnemonics_4df
+
+def get_df_from_mnemonics(df, target_mnemonics=None):
+    alias = dict()
+    for m in target_mnemonics:
+        alias[m] = []
+        for col in df.columns:
+            n = get_mnemonic(col, alias_dict=alias_dict)
+            if (m==n):            
+                alias[m].append(col)
+
+    df_ = None
+    df_cols = []
+    for key, value in alias.items():
+        if len(value)==1:
+            temp = df[value].values.reshape(-1,1)
+        elif len(value)>1:
+            temp = df[value].mean(axis=1).values.reshape(-1,1)
+        elif len(value)==0: # return index if no such column
+            temp = df.index.values.reshape(-1,1)
+
+        if df_ is None:
+            df_ = temp
+            df_cols = [key]
+        else:
+            df_ = np.c_[df_, temp]
+            df_cols = df_cols + [key]
+
+    df_ = pd.DataFrame(df_, columns=df_cols)
+    df_.index = df.index
+    df_ = df_.dropna(subset=['DTSM'])
+
+    return df_
