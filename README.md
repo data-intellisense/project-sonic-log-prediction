@@ -2,15 +2,16 @@
 # SPE-GCS Machine Learning Challenge 2021
 
 ## How to use this repository:
+
 a) clone this repository
 
-b) create a 'data/las/' folder and store all .las files in the folder. The las or h5 files are too large to upload to github.
+b) create a 'data/las/' folder and store all .las files in the folder. The las files are too large to upload to github.
 
-c) run the load.py to create a .h5 file which stores the curves and data info
+c) run the load.py to create cleaned data files store in 'data/' folder.
 
-d) run data_explore.py to explore data and plot logs
+d) run main.py to train and predict. Default to select and train on 7 features.
 
-You can import plot_logs function from plot.py to plot the logs in your code! Plotly package needs to be installed to use the plot_logs function.
+You can import functions from plot.py and util.py for your own use. Install required library accordingly.
 
 ## Project blue-print and tasks
 
@@ -60,6 +61,7 @@ d) Coding format
 
     1) Modularize your code by writing a function if possible
     2) Follow sci-kit learn style if possible
+
 ## Project timeline
 
     Committee schedule
