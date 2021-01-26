@@ -16,6 +16,8 @@ with open('data/alias_dict.pickle', 'rb') as f:
 
 pio.renderers.default = "browser"
 
+#%% simple plot of all curves in one column, good for quick plotting
+
 def plot_logs(
     df,
     well_name="well",
@@ -26,6 +28,10 @@ def plot_logs(
     plot_save_path=None,
     plot_save_format=None,  # availabe format: ["png", "html"]
 ):
+
+    '''
+    simple plot of all curves in one column, good for quick plotting
+    '''
 
     df = df.copy()
 
@@ -77,7 +83,7 @@ def plot_logs(
         return fig
 
 
-#%% test plot logs in various columns
+#%% complex plot that plots curves in multiple columns
 
 def plot_logs_columns(
     df,
@@ -89,6 +95,9 @@ def plot_logs_columns(
     plot_save_path=None,
     plot_save_format=None,  # availabe format: ["png", "html"]
 ):
+    '''
+    complex plot that plots curves in multiple columns, good for detailed analysis of curves
+    '''
 
     df = df.copy()
 
@@ -96,10 +105,11 @@ def plot_logs_columns(
     columns = df.columns.map(alias_dict)
     tot_cols = [['DTCO', 'DTSM'],                   #  row=1, col=1
                 ['RHOB'],                           #  row=1, col=2
-                ['DPHI', 'NPHI', 'RPHI', 'SPHI'],   #  row=1, col=3
+                ['DPHI', 'NPHI'],   #  row=1, col=3
                 ['GR'],                             #  row=1, col=4
                 ['AT', 'RT'],                       #  row=1, col=5
-                ['CALI']]                           #  row=1, col=6
+                ['CALI'],                           #  row=1, col=6
+                ['PEFZ']]                           #  row=1, col=7
     
     num_of_cols = 1    
     tot_cols_new = [] # update the tot_cols if some curves are missing
@@ -172,7 +182,7 @@ def plot_logs_columns(
     if plot_return:
         return fig
 
-
+#%% plot predicted and actual in a crossplot
 def plot_crossplot(y_actual, y_predict, text=None,
     axis_range = 350,
     plot_show=True,
@@ -189,9 +199,9 @@ def plot_crossplot(y_actual, y_predict, text=None,
     abline = pd.DataFrame(np.c_[np.arange(axis_range).reshape(-1,1), np.arange(axis_range).reshape(-1,1)], columns=['Actual', 'Predict'])
 
     if text is not None:
-        title_text = f'{text}, rmse_test:{rmse_test}'
+        title_text = f'{text}, rmse_test:{rmse_test:.2f}'
     else:
-        title_text = f'rmse_test:{rmse_test}'
+        title_text = f'rmse_test:{rmse_test:.2f}'
 
     fig = px.scatter(y_pred_act, x='Actual', y='Predict')
     fig.add_traces(px.line(abline, x='Actual', y='Predict').data[0])
