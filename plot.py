@@ -5,14 +5,14 @@ import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.subplots import make_subplots
-from util import get_mnemonic, get_alias
+from util import alias_dict, get_mnemonic, get_alias
 
 from sklearn.metrics import mean_squared_error
 import random 
 import pickle 
 
-with open('data/alias_dict.pickle', 'rb') as f:
-    alias_dict = pickle.load(f)
+# with open('data/alias_dict.pickle', 'rb') as f:
+#     alias_dict = pickle.load(f)
 
 pio.renderers.default = "browser"
 
@@ -87,8 +87,8 @@ def plot_logs(
 
 def plot_logs_columns(
     df,
+    DTSM_pred=None,
     well_name="",
-    DTSM_only=True,
     plot_show=True,
     plot_return=False,
     plot_save_file_name=None,
@@ -132,8 +132,12 @@ def plot_logs_columns(
             col_id = num_of_cols
                
         # print(f'col_old: {col_old}, col_new: {col_new}, col_id: {col_id}')
-        if 'TENS' not in col_new:
-            fig.add_trace(go.Scatter(x=df[col_old], y=df.index, name=col_old), row=1, col=col_id)
+        # if 'TENS' not in col_new:
+        fig.add_trace(go.Scatter(x=df[col_old], y=df.index, name=col_old), row=1, col=col_id)
+                       
+    # add predicted DTSM if not None
+    if DTSM_pred is not None:
+        fig.add_trace(go.Scatter(x=DTSM_pred['DTSM_Pred'], y=DTSM_pred['Depth'], line_color='rgba(255, 0, 0, .7)', name='DTSM_Pred'), row=1, col=1)             
 
     fig.update_layout(        
         showlegend=True,        

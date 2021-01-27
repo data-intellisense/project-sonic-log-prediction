@@ -9,12 +9,14 @@ import pandas as pd
 import re
 # for metrics
 from sklearn.metrics import mean_squared_error
-
+import pathlib
 
 #%% mnemonics dictionary
+path = pathlib.Path(__file__).parent
+#os.chdir(path)  # change current working directory, os.getcwd()
 
 # get the alias_dict, required
-with open('data/alias_dict.pickle', 'rb') as f:
+with open(f'{path}/data/alias_dict.pickle', 'rb') as f:
     alias_dict = pickle.load(f)
 
 # given a mnemonic, find all of its alias
@@ -105,7 +107,7 @@ class read_las:
     def df_welldata(self, valid_value_only=True):
         l = []
         for i in self.las.well:
-            if valid_value_only and (i.value is not ''):
+            if valid_value_only and (i.value != ''):
                 l.append([i.mnemonic, i.unit, i.value, i.descr])
         return pd.DataFrame(l, columns=['mnemonic', 'unit', 'value', 'description'])
 
@@ -226,7 +228,7 @@ class process_las:
                 temp = df[value].mean(axis=1).values.reshape(-1,1)
                 df_cols.append(key)
             elif len(value)==0: # return index if no such column
-                print(f'No corresponding alias for {key}!')
+                print(f'\tNo corresponding alias for {key}!')
                 continue
 
             if df_ is None:
@@ -242,16 +244,16 @@ class process_las:
         try:
             df_ = df_.dropna(subset=['DTSM'])
         except:
-            print('No DTSM column, no na dropped!')
+            print('\tNo DTSM column, no na dropped!')
             
         if strict_input_output and (len(target_mnemonics) != len(df_.columns)):
-            print(f'No all target mnemonics are in df, strict_input_output rule applied, return None!')
+            print(f'\tNo all target mnemonics are in df, strict_input_output rule applied, return None!')
             return None
         elif not strict_input_output and (len(target_mnemonics) != len(df_.columns)):
-            print(f'No all target mnemonics are in df, returned PARTIAL dataframe!')
+            print(f'\tNo all target mnemonics are in df, returned PARTIAL dataframe!')
             return df_.dropna(axis=0)
         else:
-            print(f'All target mnemonics are found in df, returned COMPLETE dataframe!')
+            print(f'\tAll target mnemonics are found in df, returned COMPLETE dataframe!')
             return df_.dropna(axis=0)
 
 
