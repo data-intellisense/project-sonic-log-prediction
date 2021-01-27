@@ -30,6 +30,7 @@ print(las.data.shape)
 las_raw = dict()
 las_data = dict()
 las_data_DTSM = dict()
+las_lat_lon = dict()
 
 list_no_DTSM = []
 curve_info = []
@@ -52,6 +53,7 @@ for f in glob.glob("data/las/*.las"):
     # save all data
     las_data[f_name] = df.copy()
 
+    # save only DTSM valid data
     if 'DTSM' in df.columns.map(alias_dict):
         # save only DTSM valid data    
         las_data_DTSM[f_name] = process_las().keep_valid_DTSM_only(df).copy()      
@@ -59,6 +61,9 @@ for f in glob.glob("data/las/*.las"):
         # save a list with las names without DTSM and raise warning
         print(f'{f_name}.las has no DTSM!')
         list_no_DTSM.append(f_name)
+
+    # save lat-lon
+    las_lat_lon[f_name] = las.get_lat_lon()
 
     count_ +=1
 
@@ -71,17 +76,21 @@ if len(list_no_DTSM)>=1:
 curve_info = pd.DataFrame(curve_info, columns=['WellNo', 'WellName'])
 curve_info.to_csv('data/curve_info.csv', index=False)
 
-# save las_raw
+# write las_raw
 with open('data/las_raw.pickle', 'wb') as f:
     pickle.dump(las_raw, f)
 
-# save las_data
+# write las_data
 with open('data/las_data.pickle', 'wb') as f:
     pickle.dump(las_data, f)
 
-# save las_data_DTSM
+# write las_data_DTSM
 with open('data/las_data_DTSM.pickle', 'wb') as f:
     pickle.dump(las_data_DTSM, f)
+
+# write las_data_DTSM
+with open('data/las_lat_lon.pickle', 'wb') as f:
+    pickle.dump(las_lat_lon, f)
 
 print(f"\nSuccessfully loaded total {count_+1} las files!")
 print(f"Total run time: {time.time()-time_start: .2f} seconds")

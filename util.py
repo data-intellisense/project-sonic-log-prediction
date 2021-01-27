@@ -15,18 +15,22 @@ import pathlib
 path = pathlib.Path(__file__).parent
 #os.chdir(path)  # change current working directory, os.getcwd()
 
+# write las_data_DTSM
+with open(f'{path}/data/las_lat_lon.pickle', 'rb') as f:
+    las_lat_lon = pickle.load(f)
+
 # get the alias_dict, required
 with open(f'{path}/data/alias_dict.pickle', 'rb') as f:
     alias_dict = pickle.load(f)
 
 # given a mnemonic, find all of its alias
-def get_alias(mnemonic, alias_dict=None):
+def get_alias(mnemonic, alias_dict=alias_dict):
     alias_dict = alias_dict or {}
     return [k for k, v in alias_dict.items() if mnemonic in v]
 
 # given a alias, find its corresponding one and only mnemonic
 # return a mnemonis if found, or else ''
-def get_mnemonic(alias = None, alias_dict=None):
+def get_mnemonic(alias = None, alias_dict=alias_dict):
     alias_dict = alias_dict or {}
     try:
         return [v for k, v in alias_dict.items() if alias == k][0]
@@ -44,6 +48,26 @@ def sample_weight_calc(length=1, decay=0.999):
     assert all([decay > 0, decay <= 1])
     assert all([length >= 1, type(length) is int])
     return decay ** np.arange(length, 0, step=-1)
+
+def get_distance(a, b):
+    '''
+    a and b are lists: [lat, lon] of two locations
+    '''
+    assert isinstance(a, list)    
+    assert isinstance(b, list)
+    assert all([len(a)==2, len(b)==2])
+
+    return np.sum(np.square(np.array(a)-np.array(b)))**.5
+
+def get_global_distance(las_name, las_dict):
+    dist = []
+    for key in las_dict.keys():
+        dist.append(get_distance(las_dict))
+
+def despike(df):
+
+    return None
+
 
 def CV_weighted(model, X, y, weights=None, cv=10):
     """
