@@ -1,21 +1,22 @@
 #%% import lib
-import numpy as np
-import pickle
-# for CV_weighted
-from sklearn.model_selection import KFold
-from sklearn.base import clone
-import lasio 
-import pandas as pd 
-import re
-# for metrics
-from sklearn.metrics import mean_squared_error
 import pathlib
+import pickle
+import re
+
+import lasio
+import numpy as np
+import pandas as pd
+
+from scipy.signal import medfilt
+from sklearn.base import clone
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import KFold
+
+path = pathlib.Path(__file__).parent
 
 #%% mnemonics dictionary
-path = pathlib.Path(__file__).parent
-#os.chdir(path)  # change current working directory, os.getcwd()
 
-# write las_data_DTSM
+# get las_lat_lon
 with open(f'{path}/data/las_lat_lon.pickle', 'rb') as f:
     las_lat_lon = pickle.load(f)
 
@@ -43,68 +44,7 @@ if __name__ == '__main__':
 
     print(get_mnemonic(alias = 'MODT', alias_dict=alias_dict))
 
-def sample_weight_calc(length=1, decay=0.999):
 
-    assert all([decay > 0, decay <= 1])
-    assert all([length >= 1, type(length) is int])
-    return decay ** np.arange(length, 0, step=-1)
-
-def get_distance(a, b):
-    '''
-    a and b are lists: [lat, lon] of two locations
-    '''
-    assert isinstance(a, list)    
-    assert isinstance(b, list)
-    assert all([len(a)==2, len(b)==2])
-
-    return np.sum(np.square(np.array(a)-np.array(b)))**.5
-
-def get_global_distance(las_name, las_dict):
-    dist = []
-    for key in las_dict.keys():
-        dist.append(get_distance(las_dict))
-
-def despike(df):
-
-    return None
-
-
-def CV_weighted(model, X, y, weights=None, cv=10):
-    """
-    model : a sci-kit learn estimator
-    X : a numpy array of shape (n_samples, n_features)
-    y : numpy array of shape (n_samples,)
-    weights : sample weights
-    cv : TYPE, optional, The default is 10.
-    metrics : TYPE, optional, The default is [mean_squared_error].
-    Returns: scores
-    """
-
-    if weights is None:
-        weights = np.ones(len(X))
-
-    kf = KFold(n_splits=cv)
-    kf.get_n_splits(X)
-    scores = []
-    for train_index, test_index in kf.split(X):
-        model_clone = clone(model)
-                
-        X_train, X_test = X[train_index], X[test_index]
-        y_train, y_test = y[train_index], y[test_index]
-        weights_train, weights_test = weights[train_index], weights[test_index]
-
-        try:
-            model_clone.fit(X_train, y_train, sample_weight=weights_train)
-        except: 
-            # KNN, MLP does not accept sample_weight
-            model_clone.fit(X_train, y_train)
-        y_pred = model_clone.predict(X_test)
-
-        score = mean_squared_error(y_test, y_pred, sample_weight=weights_test)
-        
-        scores.append(score)
-
-    return np.mean(scores)
 #%% read las, return curves and data etc.
 
 class read_las:
@@ -145,7 +85,10 @@ class read_las:
     def get_start_stop(self, data_names=['STRT', 'STOP']):
         return self.get_welldata(data_names=data_names)
 
-#%% TEST: read_las() from util.py 
+    
+    
+
+#% TEST: read_las() from util.py 
 # convert las.curves info to df for better reading
 
 if __name__ == '__main__':    
@@ -157,6 +100,68 @@ if __name__ == '__main__':
     print(las.get_mnemonic_unit())
     print('lat and lon:', las.get_lat_lon())
     print('start-stop depth:', las.get_start_stop())
+
+#%%
+def sample_weight_calc(length=1, decay=0.999):
+
+    assert all([decay > 0, decay <= 1])
+    assert all([length >= 1, type(length) is int])
+    return decay ** np.arange(length, 0, step=-1)
+
+def get_distance(a, b):
+    '''
+    a and b are lists: [lat, lon] of two locations
+    '''
+    assert isinstance(a, list)    
+    assert isinstance(b, list)
+    assert all([len(a)==2, len(b)==2])
+
+    return np.sum(np.square(np.array(a)-np.array(b)))**.5
+
+def get_global_distance(las_name, las_dict):
+    dist = []
+    for key in las_dict.keys():
+        dist.append(get_distance(las_dict))
+
+
+
+def CV_weighted(model, X, y, weights=None, cv=10):
+    """
+    model : a sci-kit learn estimator
+    X : a numpy array of shape (n_samples, n_features)
+    y : numpy array of shape (n_samples,)
+    weights : sample weights
+    cv : TYPE, optional, The default is 10.
+    metrics : TYPE, optional, The default is [mean_squared_error].
+    Returns: scores
+    """
+
+    if weights is None:
+        weights = np.ones(len(X))
+
+    kf = KFold(n_splits=cv)
+    kf.get_n_splits(X)
+    scores = []
+    for train_index, test_index in kf.split(X):
+        model_clone = clone(model)
+                
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        weights_train, weights_test = weights[train_index], weights[test_index]
+
+        try:
+            model_clone.fit(X_train, y_train, sample_weight=weights_train)
+        except: 
+            # KNN, MLP does not accept sample_weight
+            model_clone.fit(X_train, y_train)
+        y_pred = model_clone.predict(X_test)
+
+        score = mean_squared_error(y_test, y_pred, sample_weight=weights_test)
+        
+        scores.append(score)
+
+    return np.mean(scores)
+
 
 #%% process las data
 
@@ -174,6 +179,24 @@ class process_las:
                 for m,n in enumerate(ix):            
                     c[n] = c[n]+'_'+str(m)
         return c
+
+    def despike(self, df=None, cols=None, window_size=3):
+        '''
+        df should be a dataframe, will depike all or selected columns
+        '''
+        assert isinstance(df, pd.DataFrame)
+        assert window_size%2==1, "Median filter window size must be odd."
+
+        if cols is not None:
+            assert isinstance(cols, list), 'cols should be a list columns names of df'
+            assert all([i in df.columns for i in cols]), 'cols should be a list columns names of df'            
+        else:
+            cols = df.columns
+        
+        for col in cols:
+            df[col] = medfilt(df[col].values, kernel_size=window_size)
+
+        return df
 
     def keep_valid_DTSM_only(self, df=None, alias_dict=alias_dict):
         '''
@@ -281,15 +304,3 @@ class process_las:
             return df_.dropna(axis=0)
 
 
-#%% TEST get_df_by_mnemonics
-
-if __name__ == '__main__':    
-    las = "data/las/0052442d0162_TGS.las"
-    df = read_las(las).df()
-    
-    print('original df:', df.head(5))
-    print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['DTCO', 'GR', 'DTSM'], strict_input_output=False))
-
-    print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['DTCO', 'GR', 'DPHI', 'DTSM'], strict_input_output=False))
-
-    print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['DTCO', 'GR', 'DPHI', 'DTSM'], strict_input_output=True))
