@@ -67,7 +67,6 @@ for f in glob.glob("data/las/*.las"):
 
     count_ +=1
 
-
 list_no_DTSM = pd.DataFrame(list_no_DTSM, columns=['las without DTSM'])
 # only save if it's not empty
 if len(list_no_DTSM)>=1:

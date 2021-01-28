@@ -7,12 +7,18 @@ import lasio
 import numpy as np
 import pandas as pd
 
+from sklearn.preprocessing import MinMaxScaler
 from scipy.signal import medfilt
 from sklearn.base import clone
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
 
 path = pathlib.Path(__file__).parent
+
+#%% load necessary data for main.py
+
+with open(f'{path}/data/las_data_DTSM.pickle', 'rb') as f:
+    las_data_DTSM = pickle.load(f)
 
 #%% mnemonics dictionary
 
@@ -83,24 +89,24 @@ class read_las:
         return self.get_welldata(data_names=data_names)
 
     def get_start_stop(self, data_names=['STRT', 'STOP']):
-        return self.get_welldata(data_names=data_names)
+        return self.get_welldata(data_names=data_names) 
 
-    
-    
-
-#% TEST: read_las() from util.py 
+#% TEST: read_las() 
 # convert las.curves info to df for better reading
 
 if __name__ == '__main__':    
     las = "data/las/0052442d0162_TGS.las"
     las = read_las(las)
-    print(las.df())
+    df = las.df()
+    print(df)
     print(las.df_curvedata())
     print(las.df_welldata())
     print(las.get_mnemonic_unit())
     print('lat and lon:', las.get_lat_lon())
     print('start-stop depth:', las.get_start_stop())
 
+    
+    
 #%%
 def sample_weight_calc(length=1, decay=0.999):
 
@@ -118,11 +124,55 @@ def get_distance(a, b):
 
     return np.sum(np.square(np.array(a)-np.array(b)))**.5
 
-def get_global_distance(las_name, las_dict):
-    dist = []
-    for key in las_dict.keys():
-        dist.append(get_distance(las_dict))
+def get_sample_weight(las_name=None, las_dict=None, las_lat_lon=las_lat_lon):
+    '''
+    sample weight based on horizontal distance between wells
+    '''
+    assert (las_name, str)
+    assert (las_dict, dict)
+        
+    # get sample weight = 1/distance between target las and remaining las
+    sample_weight = []
+    for k in las_dict.keys():
+        if k not in [las_name]:
+            sample_weight = sample_weight + [1/get_distance(las_lat_lon[las_name], las_lat_lon[k])]*len(las_dict[k])
+    sample_weight = np.array(sample_weight).reshape(-1,1)
+    sample_weight = MinMaxScaler().fit_transform(sample_weight)
 
+    return sample_weight
+
+
+def get_sample_weight2(las_name=None, 
+                       las_dict=None, 
+                       vertical_anisotropy=0.2,
+                       las_lat_lon=las_lat_lon, 
+                       las_data_DTSM=las_data_DTSM):
+    '''
+    sample weight based on horizontal and vertical distance between wells
+    '''
+    assert (las_name, str)
+    assert (las_dict, dict)
+        
+    # get sample weight = 1/distance between target las and remaining las
+    sample_weight1 = []
+    sample_weight2 = []
+    for k in las_dict.keys():
+        if k not in [las_name]:
+            sample_weight1 = sample_weight1 + [1/get_distance(las_lat_lon[las_name], las_lat_lon[k])]*len(las_dict[k])
+
+            avg = np.mean(las_dict[las_name].index)
+            vertical_distance = list(abs(np.array(las_dict[k].index) - avg))
+            sample_weight2 = sample_weight2 + vertical_distance
+    
+    sample_weight1 = np.array(sample_weight1).reshape(-1,1)
+    sample_weight1 = MinMaxScaler().fit_transform(sample_weight1)
+
+    sample_weight2 = np.array(sample_weight2).reshape(-1,1)
+    sample_weight2 = MinMaxScaler().fit_transform(sample_weight2)
+
+    sample_weight = np.sqrt(sample_weight1**2+(1/vertical_anisotropy*sample_weight2)**2)
+
+    return sample_weight
 
 
 def CV_weighted(model, X, y, weights=None, cv=10):
@@ -182,7 +232,7 @@ class process_las:
 
     def despike(self, df=None, cols=None, window_size=3):
         '''
-        df should be a dataframe, will depike all or selected columns
+        df should be a dataframe, will despike all or selected columns
         '''
         assert isinstance(df, pd.DataFrame)
         assert window_size%2==1, "Median filter window size must be odd."
@@ -200,7 +250,7 @@ class process_las:
 
     def keep_valid_DTSM_only(self, df=None, alias_dict=alias_dict):
         '''
-        keep rows with valid DTSM data
+        return a df with rows of valid DTSM data
         '''    
         # deep copy of df so manipulation here won't alter original df
         df = df.copy()
@@ -237,8 +287,8 @@ class process_las:
         
     def get_df_by_mnemonics(self, df=None, target_mnemonics=None, strict_input_output=True):
         '''
-        useage: get a cleaned dataframe by given mnemonics
-        target_mnemonics: a list of legal mnemonics
+        useage: get a cleaned dataframe by given mnemonics,
+        target_mnemonics: a list of legal mnemonics,
         strict_input_output: if true, only output a df only if all target mnemonics are found in las, output None otherwise
             if false, will output a df with all possible mnemonis found in las
         '''
@@ -275,7 +325,7 @@ class process_las:
                 temp = df[value].mean(axis=1).values.reshape(-1,1)
                 df_cols.append(key)
             elif len(value)==0: # return index if no such column
-                print(f'\tNo corresponding alias for {key}!')
+                # print(f'\tNo corresponding alias for {key}!')
                 continue
 
             if df_ is None:
@@ -294,7 +344,7 @@ class process_las:
             print('\tNo DTSM column, no na dropped!')
             
         if strict_input_output and (len(target_mnemonics) != len(df_.columns)):
-            print(f'\tNo all target mnemonics are in df, strict_input_output rule applied, return None!')
+            print(f'\tNo all target mnemonics are found in df, strict_input_output rule applied, returned None!')
             return None
         elif not strict_input_output and (len(target_mnemonics) != len(df_.columns)):
             print(f'\tNo all target mnemonics are in df, returned PARTIAL dataframe!')
