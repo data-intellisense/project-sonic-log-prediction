@@ -25,6 +25,8 @@ from util import (CV_weighted, alias_dict, get_alias, get_mnemonic,
                   get_sample_weight, get_sample_weight2, las_data_DTSM,
                   process_las)
 
+from models.nn_model import nn_model
+
 pio.renderers.default='browser'
 
 # change working directory to current file directory
@@ -182,9 +184,8 @@ target_mnemonics = ['DTCO', 'NPHI', 'DPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
 
 # assemble all models in a dictionary
 models = {
-        'XGB': XGB(tree_method='hist', objective='reg:squarederror', n_estimators=100),
+        'Neural Network Model': nn_model(),
 }
-
 
 train_predict(target_mnemonics=target_mnemonics,
               models=models,
