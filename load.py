@@ -6,13 +6,13 @@ import pickle
 import random
 import time
 from itertools import count
-from plot import plot_logs
+#from plot import plot_logs
 import lasio
 import numpy as np
 import pandas as pd
 import re
 
-from plot import plot_logs_columns
+#from plot import plot_logs_columns
 from util import alias_dict, read_las, process_las, get_mnemonic, get_alias
 
 #%% TEST lasio, used log paser from here: https://lasio.readthedocs.io/en/latest
@@ -100,6 +100,6 @@ if __name__ == '__main__':
     a = las_data_DTSM[key]
     print(a[(a.index>5500) & (a.index<8000)])
 
-    plot_logs_columns(a, plot_show=True, well_name=key)
+    #plot_logs_columns(a, plot_show=True, well_name=key)
 
 

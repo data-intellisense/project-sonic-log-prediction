@@ -18,14 +18,14 @@ path = pathlib.Path(__file__).parent
 
 #%% load necessary data for main.py
 
-with open(f'{path}/data/las_data_DTSM.pickle', 'rb') as f:
-    las_data_DTSM = pickle.load(f)
+#with open(f'{path}/data/las_data_DTSM.pickle', 'rb') as f:
+    #las_data_DTSM = pickle.load(f)
 
 #%% mnemonics dictionary
 
 # get las_lat_lon
-with open(f'{path}/data/las_lat_lon.pickle', 'rb') as f:
-    las_lat_lon = pickle.load(f)
+#with open(f'{path}/data/las_lat_lon.pickle', 'rb') as f:
+    #las_lat_lon = pickle.load(f)
 
 # get the alias_dict, required
 with open(f'{path}/data/alias_dict.pickle', 'rb') as f:

@@ -7,8 +7,8 @@ import time
 
 import numpy as np
 import pandas as pd
-import plotly.express as px
-import plotly.io as pio
+#import plotly.express as px
+#import plotly.io as pio
 from sklearn.ensemble import GradientBoostingRegressor as GBR
 from sklearn.ensemble import StackingRegressor as Stack
 
@@ -16,9 +16,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor as MLP
 from sklearn.preprocessing import RobustScaler
-from xgboost import XGBRegressor as XGB
+#from xgboost import XGBRegressor as XGB
 
-from plot import plot_crossplot, plot_logs_columns
+#from plot import plot_crossplot, plot_logs_columns
 
 # load customized functions and requried dataset
 from util import (CV_weighted, alias_dict, get_alias, get_mnemonic,
@@ -27,7 +27,7 @@ from util import (CV_weighted, alias_dict, get_alias, get_mnemonic,
 
 from models.nn_model import nn_model
 
-pio.renderers.default='browser'
+#pio.renderers.default='browser'
 
 # change working directory to current file directory
 path = pathlib.Path(__file__).parent
@@ -125,29 +125,29 @@ def train_predict(target_mnemonics=None,
             # calculate rmse
             rmse.append([las_name, mean_squared_error(y_test, y_predict)**.5])
 
-            # plot crossplot to compare y_predict vs y_actual
-            plot_crossplot(y_actual=y_test, 
-                        y_predict=y_predict,
-                        text=None,
-                        plot_show=False,
-                        plot_return=False,
-                        plot_save_file_name=f'{model_name}-{las_name}-Prediction-Crossplot',
-                        plot_save_path=f'{path}/predictions/{TEST_folder}/{model_name}',
-                        plot_save_format=['png'], # availabe format: ["png", "html"]
-            )
+            # # plot crossplot to compare y_predict vs y_actual
+            # plot_crossplot(y_actual=y_test, 
+            #             y_predict=y_predict,
+            #             text=None,
+            #             plot_show=False,
+            #             plot_return=False,
+            #             plot_save_file_name=f'{model_name}-{las_name}-Prediction-Crossplot',
+            #             plot_save_path=f'{path}/predictions/{TEST_folder}/{model_name}',
+            #             plot_save_format=['png'], # availabe format: ["png", "html"]
+            # )
         
-            # plot predicted DTSM vs actual, df_ypred as pd.DataFrame is required for proper plotting
-            df_ypred = pd.DataFrame(np.c_[Xy_test.index.values.reshape(-1,1), y_predict.reshape(-1,1)], columns=['Depth', 'DTSM_Pred'])
-            plot_logs_columns(
-                        df=Xy_test,
-                        DTSM_pred=df_ypred,
-                        well_name=las_name,
-                        plot_show=False,
-                        plot_return=False,
-                        plot_save_file_name=f'{model_name}-{las_name}-Prediction-Depth',
-                        plot_save_path=f'{path}/predictions/{TEST_folder}/{model_name}',
-                        plot_save_format=['png']  # availabe format: ["png", "html"]
-            )
+            # # plot predicted DTSM vs actual, df_ypred as pd.DataFrame is required for proper plotting
+            # df_ypred = pd.DataFrame(np.c_[Xy_test.index.values.reshape(-1,1), y_predict.reshape(-1,1)], columns=['Depth', 'DTSM_Pred'])
+            # plot_logs_columns(
+            #             df=Xy_test,
+            #             DTSM_pred=df_ypred,
+            #             well_name=las_name,
+            #             plot_show=False,
+            #             plot_return=False,
+            #             plot_save_file_name=f'{model_name}-{las_name}-Prediction-Depth',
+            #             plot_save_path=f'{path}/predictions/{TEST_folder}/{model_name}',
+            #             plot_save_format=['png']  # availabe format: ["png", "html"]
+            # )
 
             print(f'Completed fitting with {model_name} model in {time.time()-time0:.2f} seconds')
 
