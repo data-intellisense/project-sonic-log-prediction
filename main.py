@@ -1,31 +1,29 @@
 #%% this module is to used test different models
+import os
+import pathlib
+import pickle
+import random
+import time
+
 import numpy as np
 import pandas as pd
-import pickle
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
-import time
-from sklearn.preprocessing import RobustScaler
-import random 
-import os
-
-# models
-from sklearn.linear_model import RidgeCV as RCV
-from sklearn.neighbors import KNeighborsRegressor as KNN
-from sklearn.svm import LinearSVR as LSVR
-from sklearn.ensemble import GradientBoostingRegressor as GBR 
-from sklearn.neural_network import MLPRegressor as MLP
-from xgboost import XGBRegressor as XGB
+import plotly.express as px
+import plotly.io as pio
+from sklearn.ensemble import GradientBoostingRegressor as GBR
 from sklearn.ensemble import StackingRegressor as Stack
 
-from plot import plot_logs_columns, plot_crossplot
-import plotly.express as px 
-import plotly.io as pio
-import pathlib 
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPRegressor as MLP
+from sklearn.preprocessing import RobustScaler
+from xgboost import XGBRegressor as XGB
+
+from plot import plot_crossplot, plot_logs_columns
 
 # load customized functions and requried dataset
-from util import alias_dict, get_alias, get_mnemonic, CV_weighted
-from util import las_data_DTSM,  process_las, get_sample_weight, get_sample_weight2
+from util import (CV_weighted, alias_dict, get_alias, get_mnemonic,
+                  get_sample_weight, get_sample_weight2, las_data_DTSM,
+                  process_las)
 
 pio.renderers.default='browser'
 
@@ -45,8 +43,6 @@ def train_predict(target_mnemonics=None,
 
     if not os.path.exists(f'{path}/predictions/{TEST_folder}'):
         os.mkdir(f'{path}/predictions/{TEST_folder}')
-
-    # choose 7 features/predictors (not including 'DTSM')
 
     target_mnemonics = target_mnemonics + ['DTSM'] # 'DTSM' is a response variable
     las_dict = dict()
@@ -106,7 +102,6 @@ def train_predict(target_mnemonics=None,
             # vertical distance in depths, VA (vertical_anisotropy) = 0.2 by default, range: [0, 1]
             # the lower the VA, the more weight on vertical distance, it's a hyperparameter that
             # could be tuned to improve model performance
-
             elif sample_weight_type==2:
                 sample_weight = get_sample_weight2(las_name=las_name, las_dict=las_dict, vertical_anisotropy=0.01)   
             
@@ -136,7 +131,7 @@ def train_predict(target_mnemonics=None,
                         plot_return=False,
                         plot_save_file_name=f'{model_name}-{las_name}-Prediction-Crossplot',
                         plot_save_path=f'{path}/predictions/{TEST_folder}/{model_name}',
-                        plot_save_format=['png']
+                        plot_save_format=['png'], # availabe format: ["png", "html"]
             )
         
             # plot predicted DTSM vs actual, df_ypred as pd.DataFrame is required for proper plotting
