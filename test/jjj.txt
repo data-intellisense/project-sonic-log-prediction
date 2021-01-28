@@ -1,0 +1,37 @@
+from keras.utils import to_categorical
+from keras.models import Sequential
+from keras.models import Model
+from keras.layers.core import Dense, Activation, Dropout
+from keras.optimizers import SGD, Adam
+from keras.layers.normalization import BatchNormalization
+from keras.layers.core import  Dropout
+from keras.layers.convolutional import Conv2D
+from keras.layers.convolutional import MaxPooling2D
+from keras.layers.core import Flatten
+from keras.callbacks import EarlyStopping
+from keras.callbacks import ModelCheckpoint
+from keras.optimizers import SGD, Adam,RMSprop,Adagrad,Adadelta,Nadam # optimization algorithms
+
+
+NB_EPOCH = 150 # number of epoch
+BATCH_SIZE = 30 # mini batch size
+VERBOSE = 1 #display results during training
+NB_CLASSES = 10 #number of classes
+OPTIMIZER = SGD() # choose optimizer
+N_HIDDEN = 128 # number of nodes in the hidden layer
+VALIDATION_SPLIT = 0.2 #80% training and 20%validation
+METRICS =['accuracy']
+LOSS = 'categorical_crossentropy' # because of multiclass
+
+model1 = Sequential()
+model1.add(Dense(1,input_shape=(X_train,)))
+model1.add(Activation('sigmoid'))
+print(model1.summary())
+
+early_stopping_monitor = EarlyStopping(monitor='val_loss',patience = 8)
+from keras.callbacks import ModelCheckpoint
+filepath="best_model1.hdf5"
+checkpoint = ModelCheckpoint(filepath,monitor='val_loss',verbose=1,save_best_only=True)
+model1.compile(loss=LOSS, optimizer = OPTIMIZER, metrics =METRICS)
+Tuning_model1 = model1.fit(x_train_small,y_train_small,batch_size=BATCH_SIZE, epochs = NB_EPOCH, verbose = VERBOSE,
+                                validation_split = VALIDATION_SPLIT,callbacks=[checkpoint,early_stopping_monitor])
