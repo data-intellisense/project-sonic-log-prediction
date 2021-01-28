@@ -66,9 +66,10 @@ def plot_logs(
 
         if plot_save_path is not None:
             plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
-            print(f"\nPlots are saved at path: {plot_save_path}!")
+            #print(f"\nPlots are saved at path: {plot_save_path}!")
         else:
-            print(f"\nPlots are saved at the same path as current script!")
+            pass
+            #print(f"\nPlots are saved at the same path as current script!")
 
         for fmt in plot_save_format:
 
@@ -182,9 +183,10 @@ def plot_logs_columns(
                     os.mkdir(plot_save_path)
 
             plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
-            print(f"\nPlots are saved at path: {plot_save_path}!")
+            # print(f"\nPlots are saved at path: {plot_save_path}!")
         else:
-            print(f"\nPlots are saved at the same path as current script!")
+            pass
+            # print(f"\nPlots are saved at the same path as current script!")
 
         for fmt in plot_save_format:
 
@@ -242,9 +244,10 @@ def plot_crossplot(y_actual, y_predict, text=None,
                 os.mkdir(plot_save_path)
 
             plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
-            print(f"\nPlots are saved at path: {plot_save_path}!")
+            # print(f"\nPlots are saved at path: {plot_save_path}!")
         else:
-            print(f"\nPlots are saved at the same path as current script!")
+            pass
+            # print(f"\nPlots are saved at the same path as current script!")
 
         for fmt in plot_save_format:
 
@@ -290,9 +293,10 @@ def plot_cords(cords=None,
                 os.mkdir(plot_save_path)
 
             plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
-            print(f"\nPlots are saved at path: {plot_save_path}!")
+            # print(f"\nPlots are saved at path: {plot_save_path}!")
         else:
-            print(f"\nPlots are saved at the same path as current script!")
+            pass
+            # print(f"\nPlots are saved at the same path as current script!")
 
         for fmt in plot_save_format:
 
