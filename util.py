@@ -57,9 +57,8 @@ class read_las:
     def __init__(self, las):
         self.las=lasio.read(las)
         return None
+        
     def df(self):        
-        # if "DEPT" not in df_.columns:
-        #     df_["DEPT"] = df_.index
         return self.las.df()
         
     def df_curvedata(self):
