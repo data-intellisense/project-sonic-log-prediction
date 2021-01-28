@@ -15,6 +15,7 @@ from sklearn.model_selection import KFold
 
 path = pathlib.Path(__file__).parent
 
+
 #%% load necessary data for main.py
 
 with open(f'{path}/data/las_data_DTSM.pickle', 'rb') as f:
@@ -132,7 +133,7 @@ def get_sample_weight(las_name=None, las_dict=None, las_lat_lon=las_lat_lon):
         
     # get sample weight = 1/distance between target las and remaining las
     sample_weight = []
-    for k in las_dict.keys():
+    for k in sorted(las_dict.keys()):
         if k not in [las_name]:
             sample_weight = sample_weight + [1/get_distance(las_lat_lon[las_name], las_lat_lon[k])]*len(las_dict[k])
     sample_weight = np.array(sample_weight).reshape(-1,1)
@@ -140,6 +141,24 @@ def get_sample_weight(las_name=None, las_dict=None, las_lat_lon=las_lat_lon):
 
     return sample_weight
 
+def get_distance_weight(las_name=None, las_dict=None, las_lat_lon=las_lat_lon):
+    '''
+    sample weight based on horizontal distance between wells
+    '''
+    assert (las_name, str)
+    assert (las_dict, dict)
+        
+    # get sample weight = 1/distance between target las and remaining las
+    distance_weight = dict()
+
+    for k in sorted(las_dict.keys()):
+        if k not in [las_name]:
+            distance_weight[k] = 1/get_distance(las_lat_lon[las_name], las_lat_lon[k])*10
+            if distance_weight[k]>10: distance_weight[k]=10
+
+    distance_weight[las_name]=max(distance_weight.values())*2
+
+    return distance_weight
 
 def get_sample_weight2(las_name=None, 
                        las_dict=None, 
@@ -155,7 +174,7 @@ def get_sample_weight2(las_name=None,
     # get sample weight = 1/distance between target las and remaining las
     sample_weight1 = []
     sample_weight2 = []
-    for k in las_dict.keys():
+    for k in sorted(las_dict.keys()):
         if k not in [las_name]:
             sample_weight1 = sample_weight1 + [1/get_distance(las_lat_lon[las_name], las_lat_lon[k])]*len(las_dict[k])
 
@@ -352,4 +371,7 @@ class process_las:
             print(f'\tAll target mnemonics are found in df, returned COMPLETE dataframe!')
             return df_.dropna(axis=0)
 
-
+#%% Test data
+las_name_test = '001-00a60e5cc262_TGS'
+las_test = "data/las/00a60e5cc262_TGS.las"
+df_test = read_las(las_test).df()

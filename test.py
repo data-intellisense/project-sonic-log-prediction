@@ -1,14 +1,17 @@
 #%% import lib
 import pickle
 import random
-from plot import plot_logs_columns
-from util import alias_dict, get_mnemonic, read_las, process_las
+from plot import plot_logs_columns, plot_3DWell
+from util import alias_dict, get_mnemonic, read_las, process_las, las_name_test, las_data_DTSM
+
+
+#%% plot wellbores in 3D, weighted and un-weighted
+
+plot_3DWell(las_name_test=las_name_test, las_data_DTSM=las_data_DTSM, display_weight=True)
+plot_3DWell(las_name_test=las_name_test, las_data_DTSM=las_data_DTSM, display_weight=False)
 
 #%% -----------------------------------------------------------------------------------------
 # plot all las and save the plots
-
-with open('data/las_data_DTSM.pickle', 'rb') as f:
-    las_data_DTSM = pickle.load(f)
 
 # plot some random las for testing
 key = random.choice(list(las_data_DTSM.keys()))
@@ -83,6 +86,8 @@ fig.update_layout(xaxis = dict(title='Longitude'),
                     yaxis = dict(title='Latitude'),
                     title = dict(text='Size: Stop Depth'),
                     font=dict(size=18))
+
+
 
 #%% -----------------------------------------------------------------------------------------
 # TEST: mnemonics mapping
