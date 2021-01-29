@@ -6,24 +6,13 @@ import pickle
 import random
 import time
 from itertools import count
-from plot import plot_logs
 import lasio
 import numpy as np
 import pandas as pd
 import re
 
 #from plot import plot_logs_columns
-from util import alias_dict, read_las, process_las, get_mnemonic, get_alias
-
-#%% TEST lasio, used log paser from here: https://lasio.readthedocs.io/en/latest
-
-# read first las file
-las = lasio.read("data/las/00a60e5cc262_TGS.las")
-
-# check existing curves and data shapes
-print(las.curves)
-print(las.well)
-print(las.data.shape)
+from util import read_las, process_las, get_mnemonic, get_alias
 
 #%% read all las files to df, keep all and valid DTSM only, and store to pickle file format
 
@@ -93,13 +82,5 @@ with open('data/las_lat_lon.pickle', 'wb') as f:
 
 print(f"\nSuccessfully loaded total {count_+1} las files!")
 print(f"Total run time: {time.time()-time_start: .2f} seconds")
-
-if __name__ == '__main__':
-    # check if nan columns dropped
-    key = '001-00a60e5cc262_TGS'
-    a = las_data_DTSM[key]
-    print(a[(a.index>5500) & (a.index<8000)])
-
-    plot_logs_columns(a, plot_show=True, well_name=key)
 
 
