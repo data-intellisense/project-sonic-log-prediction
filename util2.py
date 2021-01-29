@@ -18,18 +18,6 @@ path = pathlib.Path(__file__).parent
 
 #%% load necessary data for main.py
 
-with open(f'{path}/data/las_data_DTSM.pickle', 'rb') as f:
-    las_data_DTSM = pickle.load(f)
-
-#%% mnemonics dictionary
-
-# get las_lat_lon
-with open(f'{path}/data/las_lat_lon.pickle', 'rb') as f:
-    las_lat_lon = pickle.load(f)
-
-# get the alias_dict, required
-with open(f'{path}/data/alias_dict.pickle', 'rb') as f:
-    alias_dict = pickle.load(f)
 
 # given a mnemonic, find all of its alias
 def get_alias(mnemonic, alias_dict=alias_dict):
@@ -44,12 +32,6 @@ def get_mnemonic(alias = None, alias_dict=alias_dict):
         return [v for k, v in alias_dict.items() if alias == k][0]
     except:
         return ''
-
-if __name__ == '__main__':    
-
-    print(get_alias('PEFZ', alias_dict=alias_dict))
-
-    print(get_mnemonic(alias = 'MODT', alias_dict=alias_dict))
 
 
 #%% read las, return curves and data etc.
@@ -91,21 +73,6 @@ class read_las:
     def get_start_stop(self, data_names=['STRT', 'STOP']):
         return self.get_welldata(data_names=data_names) 
 
-#% TEST: read_las() 
-# convert las.curves info to df for better reading
-
-if __name__ == '__main__':    
-    las = "data/las/0052442d0162_TGS.las"
-    las = read_las(las)
-    df = las.df()
-    print(df)
-    print(las.df_curvedata())
-    print(las.df_welldata())
-    print(las.get_mnemonic_unit())
-    print('lat and lon:', las.get_lat_lon())
-    print('start-stop depth:', las.get_start_stop())
-
-    
     
 #%%
 def sample_weight_calc(length=1, decay=0.999):
@@ -371,7 +338,3 @@ class process_las:
             print(f'\tAll target mnemonics are found in df, returned COMPLETE dataframe!')
             return df_.dropna(axis=0)
 
-#%% Test data
-las_name_test = '001-00a60e5cc262_TGS'
-las_test = "data/las/00a60e5cc262_TGS.las"
-df_test = read_las(las_test).df()
