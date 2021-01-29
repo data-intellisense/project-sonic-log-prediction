@@ -7,8 +7,8 @@ import time
 
 import numpy as np
 import pandas as pd
-#import plotly.express as px
-#import plotly.io as pio
+import plotly.express as px
+import plotly.io as pio
 from sklearn.ensemble import GradientBoostingRegressor as GBR
 from sklearn.ensemble import StackingRegressor as Stack
 
@@ -21,11 +21,11 @@ from sklearn.preprocessing import RobustScaler
 #from plot import plot_crossplot, plot_logs_columns
 
 # load customized functions and requried dataset
-from util import (CV_weighted, alias_dict, get_alias, get_mnemonic,
+from util import (CV_weigthed, alias_dict, get_alias, get_mnemonic,
                   get_sample_weight, get_sample_weight2, las_data_DTSM,
                   process_las)
 
-from models.nn_model import nn_model
+#from models.nn_model import nn_model
 
 #pio.renderers.default='browser'
 
@@ -184,7 +184,7 @@ target_mnemonics = ['DTCO', 'NPHI', 'DPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
 
 # assemble all models in a dictionary
 models = {
-        'Neural Network Model': nn_model(),
+        #'Neural Network Model': nn_model(),
 }
 
 train_predict(target_mnemonics=target_mnemonics,
