@@ -15,6 +15,9 @@ import re
 from plot import plot_logs_columns
 from util import alias_dict, read_las, process_las, get_mnemonic, get_alias
 
+
+
+
 #%% TEST lasio, used log paser from here: https://lasio.readthedocs.io/en/latest
 
 # read first las file
@@ -102,4 +105,22 @@ if __name__ == '__main__':
 
     plot_logs_columns(a, plot_show=True, well_name=key)
 
+
+#%% QC curves
+
+curve_info_to_QC = pd.read_csv('data/curve_info_to_QC.csv')
+
+# read las_data_DTSM
+with open('data/las_data_DTSM.pickle', 'rb') as f:
+    las_data_DTSM = pickle.load(f)
+
+curve_info_to_QC.dropna(subset=['Curves to remove'], inplace=True)
+
+for ix, WellName, curves_to_remove, *_ in curve_info_to_QC.itertuples():
+    curves_to_remove = [ i.strip() for i in curves_to_remove.split(',')]
+    las_data_DTSM[WellName] = las_data_DTSM[WellName][las_data_DTSM[WellName].columns.difference(curves_to_remove)]
+
+# write las_data_DTSM
+with open('data/las_data_DTSM.pickle', 'wb') as f:
+    pickle.dump(las_data_DTSM, f)
 

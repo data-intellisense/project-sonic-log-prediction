@@ -1,6 +1,6 @@
 from keras.utils import to_categorical
 from keras.models import Sequential
-from keras.models import self.model
+# from keras.models import model
 from keras.layers.core import Dense, Activation, Dropout
 from keras.optimizers import SGD, Adam
 from keras.layers.normalization import BatchNormalization
@@ -30,7 +30,7 @@ class nn_model():
         METRICS =['accuracy']
         LOSS = 'categorical_crossentropy' # because of multiclass
         
-        filepath="best_model.hdf5"
+        filepath="models/best_nn_model.hdf5"
 
         self.model = Sequential()
         self.model.add(Dense(1,input_shape=(N_HIDDEN,)))

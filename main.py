@@ -20,6 +20,7 @@ from xgboost import XGBRegressor as XGB
 
 from plot import plot_crossplot, plot_logs_columns
 
+# from models.nn_model import nn_model
 # load customized functions and requried dataset
 from util import (CV_weighted, alias_dict, get_alias, get_mnemonic,
                   get_sample_weight, get_sample_weight2, las_data_DTSM,
@@ -28,8 +29,9 @@ from util import (CV_weighted, alias_dict, get_alias, get_mnemonic,
 pio.renderers.default='browser'
 
 # change working directory to current file directory
-path = pathlib.Path(__file__).parent
-os.chdir(path)
+# path = pathlib.Path(__file__).parent
+# os.chdir(path)
+path = r"C:\Users\Julian Liu\Documents\Project\SPEGCS ML Challenge\project-gcs-datathon2021"
 
 #%%  TEST 2: split train/test among las files (recommended)
 
@@ -148,12 +150,14 @@ def train_predict(target_mnemonics=None,
             )
 
             print(f'Completed fitting with {model_name} model in {time.time()-time0:.2f} seconds')
+            print(f'{las_name}, rmse: {rmse[-1][-1]:.2f}')
 
         rmse = pd.DataFrame(rmse, columns=['las_name', model_name])
         rmse_test.append(rmse)
 
     # # covnert rmse_test to pd.DataFrame and save to .csv
-    rmse_test = pd.concat(rmse_test, axis=1) 
+    rmse_test = pd.concat(rmse_test, axis=1)
+    rmse_test['rmse']
     rmse_test.to_csv(f'{path}/predictions/{TEST_folder}/rmse_test.csv')
 
 print('Completed training with all models!')
@@ -182,6 +186,7 @@ target_mnemonics = ['DTCO', 'NPHI', 'DPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
 
 # assemble all models in a dictionary
 models = {
+        #'NeuralNetwork': nn_model()
         'XGB': XGB(tree_method='hist', objective='reg:squarederror', n_estimators=100),
 }
 
