@@ -157,10 +157,11 @@ def train_predict(target_mnemonics=None,
 
     # # covnert rmse_test to pd.DataFrame and save to .csv
     rmse_test = pd.concat(rmse_test, axis=1)
-    rmse_test['rmse']
     rmse_test.to_csv(f'{path}/predictions/{TEST_folder}/rmse_test.csv')
+    
+    return rmse_test
 
-print('Completed training with all models!')
+
 
 #%%  TEST 2: split train/test among las files (recommended)
 
@@ -186,16 +187,30 @@ target_mnemonics = ['DTCO', 'NPHI', 'DPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
 
 # assemble all models in a dictionary
 models = {
-        #'NeuralNetwork': nn_model()
-        'XGB': XGB(tree_method='hist', objective='reg:squarederror', n_estimators=100),
+        'XGB': 
+        XGB(tree_method='hist',
+            objective='reg:squarederror',
+            subsample=0.76, 
+            n_estimators= 250, 
+            min_child_weight= 0.02, 
+            max_depth= 3, 
+            learning_rate= 0.052,
+            reg_lambda= 33),
 }
 
 
-train_predict(target_mnemonics=target_mnemonics,
-              models=models,
-              TEST_folder=TEST_folder,
-              las_data_DTSM=las_data_DTSM,                                    
-              sample_weight_type=2
+rmse_test = train_predict(target_mnemonics=target_mnemonics,
+                            models=models,
+                            TEST_folder=TEST_folder,
+                            las_data_DTSM=las_data_DTSM,                                    
+                            sample_weight_type=2
 )
+
+print('Completed training with all models!')
+
+rmse_test_ = dict()
+for col in rmse_test.columns[1:]:
+    rmse_test_[col]=rmse_test[col].mean()
+print(rmse_test_)
 
 print(f'Prediction results are saved at: {path}/predictions/{TEST_folder}')

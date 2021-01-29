@@ -105,7 +105,6 @@ if __name__ == '__main__':
 
     plot_logs_columns(a, plot_show=True, well_name=key)
 
-
 #%% QC curves
 
 curve_info_to_QC = pd.read_csv('data/curve_info_to_QC.csv')
