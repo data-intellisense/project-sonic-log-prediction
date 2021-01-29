@@ -1,6 +1,6 @@
 from keras.utils import to_categorical
 from keras.models import Sequential
-from keras.models import self.model
+#from keras.models import self.Model
 from keras.layers.core import Dense, Activation, Dropout
 from keras.optimizers import SGD, Adam
 from keras.layers.normalization import BatchNormalization
