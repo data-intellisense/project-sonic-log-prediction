@@ -12,7 +12,7 @@ import pandas as pd
 import re
 
 #from plot import plot_logs_columns
-from util import read_las, process_las, get_mnemonic, get_alias
+from util2 import read_las, process_las, get_mnemonic, get_alias
 
 #%% read all las files to df, keep all and valid DTSM only, and store to pickle file format
 
