@@ -24,7 +24,7 @@ from plot import plot_crossplot, plot_logs_columns
 # load customized functions and requried dataset
 from util import (CV_weighted, alias_dict, get_alias, get_mnemonic,
                   get_sample_weight, get_sample_weight2, las_data_DTSM_QC,
-                  process_las)
+                  process_las, las_lat_lon)
 
 pio.renderers.default='browser'
 
@@ -99,14 +99,17 @@ def train_predict(target_mnemonics=None,
             # calcualte sample weight based on sample_weight_type
             # type 1: sample weight based on horizontal distance between wells
             if sample_weight_type==1:
-                sample_weight = get_sample_weight1(las_name=las_name, las_dict=las_dict)   
+                sample_weight = get_sample_weight1(las_name=las_name, las_dict=las_dict, 
+                                las_lat_lon=las_lat_lon)   
 
             # type 2: sample weight based on both horizontal distance between wells and 
             # vertical distance in depths, VA (vertical_anisotropy) = 0.2 by default, range: [0, 1]
             # the lower the VA, the more weight on vertical distance, it's a hyperparameter that
             # could be tuned to improve model performance
             elif sample_weight_type==2:
-                sample_weight = get_sample_weight2(las_name=las_name, las_dict=las_dict, vertical_anisotropy=0.01)   
+                sample_weight = get_sample_weight2(las_name=las_name, 
+                                las_lat_lon=las_lat_lon, las_data_DTSM=las_data_DTSM_QC,
+                                las_dict=las_dict, vertical_anisotropy=0.01)   
             
             # 0 or any other value will lead to no sample weight used
             else:

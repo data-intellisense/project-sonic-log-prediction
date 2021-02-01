@@ -11,7 +11,7 @@ import plotly.io as pio
 from plotly.subplots import make_subplots
 from sklearn.metrics import mean_squared_error
 
-from util import (alias_dict, df_test, get_alias, get_mnemonic, las_data_DTSM,
+from util import (alias_dict, df_test, get_alias, get_mnemonic,
                   las_lat_lon, las_name_test, las_test, get_sample_weight, get_sample_weight2,
                   get_distance_weight)
 
@@ -19,7 +19,7 @@ pio.renderers.default = "browser"
 
 #%% 3D plot of wels
 
-def plot_3DWell(las_name_test=las_name_test, las_data_DTSM=las_data_DTSM, display_weight=True):
+def plot_3DWell(las_name_test=las_name_test, las_data_DTSM=None, display_weight=True):
     assert isinstance(las_name_test, str)
     assert isinstance(las_data_DTSM, dict)
     assert all([las_name_test in las_data_DTSM.keys()])
@@ -203,6 +203,7 @@ def plot_logs_columns(
     plot_save_file_name=None,
     plot_save_path=None,
     plot_save_format=None,  # availabe format: ["png", "html"]
+    alias_dict=alias_dict,
 ):
     '''
     complex plot that plots curves in multiple columns, good for detailed analysis of curves

@@ -16,19 +16,19 @@ from sklearn.model_selection import KFold
 path = pathlib.Path(__file__).parent
 
 #%% special case, create alias_dict
-import pandas as pd
-import pickle
-import lasio
+# import pandas as pd
+# import pickle
+# import lasio
 
-df = pd.read_csv("data/grouped_mnemonics_corrected.csv")
-df.head(10)
+# df = pd.read_csv("data/grouped_mnemonics_corrected.csv")
+# df.head(10)
 
-alias_dict = dict()
-for ix, m1, m2, _ in df.itertuples():
-    alias_dict[m1] = m2
+# alias_dict = dict()
+# for ix, m1, m2, _ in df.itertuples():
+#     alias_dict[m1] = m2
 
-with open("data/alias_dict.pickle", "wb") as f:
-    pickle.dump(alias_dict, f)
+# with open("data/alias_dict.pickle", "wb") as f:
+#     pickle.dump(alias_dict, f)
 
 
 
@@ -140,7 +140,7 @@ def get_distance(a, b):
 
     return np.sum(np.square(np.array(a)-np.array(b)))**.5
 
-def get_sample_weight(las_name=None, las_dict=None, las_lat_lon=las_lat_lon):
+def get_sample_weight(las_name=None, las_dict=None, las_lat_lon=None):
     '''
     sample weight based on horizontal distance between wells
     '''
@@ -157,7 +157,7 @@ def get_sample_weight(las_name=None, las_dict=None, las_lat_lon=las_lat_lon):
 
     return sample_weight
 
-def get_distance_weight(las_name=None, las_dict=None, las_lat_lon=las_lat_lon):
+def get_distance_weight(las_name=None, las_dict=None, las_lat_lon=None):
     '''
     sample weight based on horizontal distance between wells
     '''
@@ -178,9 +178,9 @@ def get_distance_weight(las_name=None, las_dict=None, las_lat_lon=las_lat_lon):
 
 def get_sample_weight2(las_name=None, 
                        las_dict=None, 
-                       vertical_anisotropy=0.2,
-                       las_lat_lon=las_lat_lon, 
-                       las_data_DTSM=las_data_DTSM):
+                       vertical_anisotropy=0.01,
+                       las_lat_lon=None, 
+                       las_data_DTSM=None):
     '''
     sample weight based on horizontal and vertical distance between wells
     '''
@@ -312,6 +312,18 @@ class process_las:
         # drop all empty rows in 'DTSM' column if there is a 'DTSM' column
         # if 'DTSM' in df.columns, dropp all rows with nan in DTSM column
         df = df.dropna(subset=['DTSM'])
+
+        # drop other columns with all na
+        df = df.dropna(axis=1, how='all')
+
+        return df  
+
+    def load_test_No_DTSM(self, df=None, alias_dict=alias_dict):
+        '''
+        return a df with selected mnemonics/alias
+        '''    
+        # deep copy of df so manipulation here won't alter original df
+        df = df.copy()
 
         # drop other columns with all na
         df = df.dropna(axis=1, how='all')

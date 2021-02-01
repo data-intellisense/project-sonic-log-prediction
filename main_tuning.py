@@ -26,7 +26,7 @@ from plot import plot_crossplot, plot_logs_columns
 # from models.nn_model import nn_model
 # load customized functions and requried dataset
 from util import (CV_weighted, alias_dict, get_alias, get_mnemonic,
-                  get_sample_weight, get_sample_weight2, las_data_DTSM,
+                  get_sample_weight, get_sample_weight2, las_data_DTSM_QC,
                   process_las)
 
 pio.renderers.default='browser'
