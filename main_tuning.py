@@ -40,25 +40,25 @@ os.chdir(path)
 
 #%%  TEST 2: split train/test among las files (recommended)
 
-# choose 7 features/predictors (not including 'DTSM')
-TEST_folder = '7features_LOOCV_las'
-target_mnemonics = ['DTCO', 'NPHI', 'DPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
+# # choose 7 features/predictors (not including 'DTSM')
+# TEST_folder = '7features_LOOCV_las'
+# target_mnemonics = ['DTCO', 'NPHI', 'DPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
 
-# folder to store plots, will create one if not exists
-TEST_folder = '2features_LOOCV_las'
-target_mnemonics = ['DTCO', 'RHOB']
+# # folder to store plots, will create one if not exists
+# TEST_folder = '2features_LOOCV_las'
+# target_mnemonics = ['DTCO', 'RHOB']
 
-# folder to store plots, will create one if not exists
-TEST_folder = '5features_LOOCV_las'
-target_mnemonics = ['DTCO', 'NPHI', 'RHOB', 'GR', 'RT']
+# # folder to store plots, will create one if not exists
+# TEST_folder = '5features_LOOCV_las'
+# target_mnemonics = ['DTCO', 'NPHI', 'RHOB', 'GR', 'RT']
 
-# folder to store plots, will create one if not exists
-TEST_folder = '3features_LOOCV_las'
-target_mnemonics = ['DTCO', 'NPHI', 'RHOB']
+# # folder to store plots, will create one if not exists
+# TEST_folder = '3features_LOOCV_las'
+# target_mnemonics = ['DTCO', 'NPHI', 'RHOB']
 
 # choose 8 features/predictors (not including 'DTSM')
-TEST_folder = '8features_LOOCV_las'
-target_mnemonics = ['DTCO', 'NPHI', 'DPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
+TEST_folder = '7features_LOOCV_las_tuning'
+target_mnemonics = ['DTCO', 'NPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
 
 
 if not os.path.exists(f'{path}/predictions/{TEST_folder}'):

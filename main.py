@@ -23,15 +23,16 @@ from plot import plot_crossplot, plot_logs_columns
 # from models.nn_model import nn_model
 # load customized functions and requried dataset
 from util import (CV_weighted, alias_dict, get_alias, get_mnemonic,
-                  get_sample_weight, get_sample_weight2, las_data_DTSM,
+                  get_sample_weight, get_sample_weight2, las_data_DTSM_QC,
                   process_las)
 
 pio.renderers.default='browser'
 
 # change working directory to current file directory
-# path = pathlib.Path(__file__).parent
-# os.chdir(path)
-path = r"C:\Users\Julian Liu\Documents\Project\SPEGCS ML Challenge\project-gcs-datathon2021"
+# path = r"C:\Users\Julian Liu\Documents\Project\SPEGCS ML Challenge\project-gcs-datathon2021"
+path = pathlib.Path(__file__).parent
+os.chdir(path)
+
 
 #%%  TEST 2: split train/test among las files (recommended)
 
@@ -46,7 +47,7 @@ def train_predict(target_mnemonics=None,
     if not os.path.exists(f'{path}/predictions/{TEST_folder}'):
         os.mkdir(f'{path}/predictions/{TEST_folder}')
 
-    target_mnemonics = target_mnemonics + ['DTSM'] # 'DTSM' is a response variable
+    target_mnemonics = target_mnemonics + ['DTSM']
     las_dict = dict()
 
     # get the data that corresponds to terget mnemonics
@@ -165,25 +166,25 @@ def train_predict(target_mnemonics=None,
 
 #%%  TEST 2: split train/test among las files (recommended)
 
-# choose 7 features/predictors (not including 'DTSM')
-TEST_folder = '7features_LOOCV_las'
-target_mnemonics = ['DTCO', 'NPHI', 'DPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
+# # choose 7 features/predictors (not including 'DTSM')
+# TEST_folder = '6features_LOOCV_las'
+# target_mnemonics = ['DTCO', 'NPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
 
-# folder to store plots, will create one if not exists
-TEST_folder = '2features_LOOCV_las'
-target_mnemonics = ['DTCO', 'RHOB']
+# # folder to store plots, will create one if not exists
+# TEST_folder = '2features_LOOCV_las'
+# target_mnemonics = ['DTCO', 'RHOB']
 
-# folder to store plots, will create one if not exists
-TEST_folder = '5features_LOOCV_las'
-target_mnemonics = ['DTCO', 'NPHI', 'RHOB', 'GR', 'RT']
+# # folder to store plots, will create one if not exists
+# TEST_folder = '5features_LOOCV_las'
+# target_mnemonics = ['DTCO', 'NPHI', 'RHOB', 'GR', 'RT']
 
-# folder to store plots, will create one if not exists
-TEST_folder = '3features_LOOCV_las'
-target_mnemonics = ['DTCO', 'NPHI', 'RHOB']
+# # folder to store plots, will create one if not exists
+# TEST_folder = '3features_LOOCV_las'
+# target_mnemonics = ['DTCO', 'NPHI', 'RHOB']
 
 # choose 8 features/predictors (not including 'DTSM')
-TEST_folder = '8features_LOOCV_las'
-target_mnemonics = ['DTCO', 'NPHI', 'DPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
+TEST_folder = '7features_LOOCV_las'
+target_mnemonics = ['DTCO', 'NPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
 
 # assemble all models in a dictionary
 models = {
@@ -202,7 +203,7 @@ models = {
 rmse_test = train_predict(target_mnemonics=target_mnemonics,
                             models=models,
                             TEST_folder=TEST_folder,
-                            las_data_DTSM=las_data_DTSM,                                    
+                            las_data_DTSM=las_data_DTSM_QC,                                    
                             sample_weight_type=2
 )
 

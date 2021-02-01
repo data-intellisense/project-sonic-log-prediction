@@ -16,18 +16,6 @@ from plot import plot_logs_columns
 from util import alias_dict, read_las, process_las, get_mnemonic, get_alias
 
 
-
-
-#%% TEST lasio, used log paser from here: https://lasio.readthedocs.io/en/latest
-
-# read first las file
-las = lasio.read("data/las/00a60e5cc262_TGS.las")
-
-# check existing curves and data shapes
-print(las.curves)
-print(las.well)
-print(las.data.shape)
-
 #%% read all las files to df, keep all and valid DTSM only, and store to pickle file format
 
 las_raw = dict()
@@ -76,7 +64,7 @@ if len(list_no_DTSM)>=1:
     list_no_DTSM.to_csv('data/list_no_DTSM.csv', index=True)
 
 curve_info = pd.DataFrame(curve_info, columns=['WellNo', 'WellName'])
-curve_info.to_csv('data/curve_info.csv', index=False)
+# curve_info.to_csv('data/curve_info.csv', index=False)
 
 # write las_raw
 with open('data/las_raw.pickle', 'wb') as f:
@@ -103,9 +91,9 @@ if __name__ == '__main__':
     a = las_data_DTSM[key]
     print(a[(a.index>5500) & (a.index<8000)])
 
-    plot_logs_columns(a, plot_show=True, well_name=key)
+    # plot_logs_columns(a, plot_show=True, well_name=key)
 
-#%% QC curves
+#%% QC curves, remove unnecessary curves
 
 curve_info_to_QC = pd.read_csv('data/curve_info_to_QC.csv')
 
@@ -113,13 +101,45 @@ curve_info_to_QC = pd.read_csv('data/curve_info_to_QC.csv')
 with open('data/las_data_DTSM.pickle', 'rb') as f:
     las_data_DTSM = pickle.load(f)
 
-curve_info_to_QC.dropna(subset=['Curves to remove'], inplace=True)
+# create a new dict
+las_data_DTSM_QC = dict()
 
-for ix, WellName, curves_to_remove, *_ in curve_info_to_QC.itertuples():
-    curves_to_remove = [ i.strip() for i in curves_to_remove.split(',')]
-    las_data_DTSM[WellName] = las_data_DTSM[WellName][las_data_DTSM[WellName].columns.difference(curves_to_remove)]
+# remove the undesired curves
+temp = curve_info_to_QC[['WellName','Curves to remove', 'drop_las']]
+for ix, WellName, curves_to_remove, drop_las in temp.itertuples():
+    if pd.isnull(drop_las):
+        curves_to_remove = [i.strip() for i in str(curves_to_remove).split(',')]
+        print(WellName, 'removing', curves_to_remove[:2], '...')
+
+        # check if all 'curves_to_remove' are in columns names, then drop curves
+        if all([i in las_data_DTSM[WellName].columns for i in curves_to_remove]):
+            las_data_DTSM_QC[WellName] = las_data_DTSM[WellName][las_data_DTSM[WellName].columns.difference(curves_to_remove)]           
+            remaining_mnemonics = [get_mnemonic(i) for i in las_data_DTSM_QC[WellName].columns]
+            for i in curves_to_remove:
+                if (get_mnemonic(i) not in remaining_mnemonics) and (i != 'AHFCO60'):
+                    print(f'\tRemoving {i} from data, while {remaining_mnemonics} does not have !')
+        else:
+            las_data_DTSM_QC[WellName] = las_data_DTSM[WellName]
+            if curves_to_remove != ['nan']:
+                print(f"\tNot all {curves_to_remove} are in {WellName} columns. No curves are removed!")
+        
+
+
+print('*'*90)
+
+temp = curve_info_to_QC[['WellName','Top Depth', 'Btm Depth']]
+for ix, WellName, top_depth, btm_depth in temp.itertuples():
+    if not pd.isnull(top_depth):
+        las_data_DTSM_QC[WellName] = las_data_DTSM_QC[WellName][las_data_DTSM_QC[WellName].index>=top_depth]
+    if not pd.isnull(btm_depth):
+        las_data_DTSM_QC[WellName] = las_data_DTSM_QC[WellName][las_data_DTSM_QC[WellName].index<=btm_depth]
+
+print('The new number of las with DTSM is:', len(las_data_DTSM_QC))
+
+for WellName in las_data_DTSM_QC.keys():
+    las_data_DTSM_QC[WellName] = las_data_DTSM_QC[WellName].dropna(axis=1, how='all')
+    # print(WellName,':dropping all na columns')            
 
 # write las_data_DTSM
-with open('data/las_data_DTSM.pickle', 'wb') as f:
-    pickle.dump(las_data_DTSM, f)
-
+with open('data/las_data_DTSM_QC.pickle', 'wb') as f:
+    pickle.dump(las_data_DTSM_QC, f)

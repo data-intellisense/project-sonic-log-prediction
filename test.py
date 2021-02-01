@@ -46,20 +46,6 @@ df = process_las().despike(df)
 plot_logs_columns(df)
 
 #%% -----------------------------------------------------------------------------------------
-# create alias_dict
-import pandas as pd
-import pickle
-import lasio
-
-df = pd.read_csv("data/grouped_mnemonics_corrected.csv")
-df.head(10)
-
-alias_dict = dict()
-for ix, m1, m2, _ in df.itertuples():
-    alias_dict[m1] = m2
-
-with open("data/alias_dict.pickle", "wb") as f:
-    pickle.dump(alias_dict, f)
 
 #%% -----------------------------------------------------------------------------------------
 # create coordinate plot

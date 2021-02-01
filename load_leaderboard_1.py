@@ -17,7 +17,7 @@ from util import alias_dict, read_las, process_las, get_mnemonic, get_alias
 
 #%% read all las files to df, keep all and valid DTSM only, and store to pickle file format
 
-path = f"data/leaderboard_1"
+path = f"data/leaderboard_1_updated"
 
 las_raw = dict()
 las_data = dict()
@@ -26,7 +26,7 @@ las_lat_lon = dict()
 
 
 time_start = time.time()
-count_ = 0
+count_ = 1
 for f in glob.glob(f"{path}/*.las"):
     f_name = re.split("[\\\/]", f)[-1][:-4]
     f_name = f"{count_:0>3}-{f_name}"

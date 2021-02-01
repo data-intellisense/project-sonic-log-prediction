@@ -217,7 +217,7 @@ def plot_logs_columns(
                 ['DPHI'],                           #  row=1, col=3
                 ['NPHI'],                           #  row=1, col=4
                 ['GR'],                             #  row=1, col=5
-                ['AT', 'RT'],                       #  row=1, col=6
+                ['RT'],                             #  row=1, col=6
                 ['CALI'],                           #  row=1, col=7
                 ['PEFZ']]                           #  row=1, col=8
     

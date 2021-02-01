@@ -15,11 +15,27 @@ from sklearn.model_selection import KFold
 
 path = pathlib.Path(__file__).parent
 
+#%% special case, create alias_dict
+import pandas as pd
+import pickle
+import lasio
+
+df = pd.read_csv("data/grouped_mnemonics_corrected.csv")
+df.head(10)
+
+alias_dict = dict()
+for ix, m1, m2, _ in df.itertuples():
+    alias_dict[m1] = m2
+
+with open("data/alias_dict.pickle", "wb") as f:
+    pickle.dump(alias_dict, f)
+
+
 
 #%% load necessary data for main.py
 
-with open(f'{path}/data/las_data_DTSM.pickle', 'rb') as f:
-    las_data_DTSM = pickle.load(f)
+with open(f'{path}/data/las_data_DTSM_QC.pickle', 'rb') as f:
+    las_data_DTSM_QC = pickle.load(f)
 
 #%% mnemonics dictionary
 
@@ -334,7 +350,7 @@ class process_las:
         df_ = None
         df_cols = []
 
-        # key: target mnenomics; value: alias in df
+        # key: target mnenomics; value: alias in df, average the curves if more than 1 exist!
         for key, value in alias.items():
             if len(value)==1:
                 temp = df[value].values.reshape(-1,1)
@@ -342,6 +358,7 @@ class process_las:
             elif len(value)>1:
                 temp = df[value].mean(axis=1).values.reshape(-1,1)
                 df_cols.append(key)
+                # print(f'{key} has more than 1 curves:{value}, averaged!')
             elif len(value)==0: # return index if no such column
                 # print(f'\tNo corresponding alias for {key}!')
                 continue
@@ -356,19 +373,22 @@ class process_las:
         df_.index = df.index
 
         # dropped rows with na in DTSM column
-        try:
-            df_ = df_.dropna(subset=['DTSM'])
-        except:
-            print('\tNo DTSM column, no na dropped!')
-            
+        # try:
+        #     df_ = df_.dropna(subset=['DTSM'])
+        # except:
+        #     print('\tNo DTSM column, no na dropped!')
+
+     
         if strict_input_output and (len(target_mnemonics) != len(df_.columns)):
             print(f'\tNo all target mnemonics are found in df, strict_input_output rule applied, returned None!')
             return None
         elif not strict_input_output and (len(target_mnemonics) != len(df_.columns)):
             print(f'\tNo all target mnemonics are in df, returned PARTIAL dataframe!')
+            # better to drop all na in all columns
             return df_.dropna(axis=0)
         else:
             print(f'\tAll target mnemonics are found in df, returned COMPLETE dataframe!')
+            # better to drop all na in all columns
             return df_.dropna(axis=0)
 
 #%% Test data

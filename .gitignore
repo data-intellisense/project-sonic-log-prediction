@@ -1,15 +1,11 @@
 .vscode
 **.las
-**.h5
 **__pycache__
 
 .git
-.gitignore
-*.pickle
+**.pickle
 !alias_dict.pickle
-!las_data_7features.pickle
 !*.csv
 
-
-/plots-1/
-/plots/
+plots/
+predictions/
