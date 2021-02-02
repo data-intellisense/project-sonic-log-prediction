@@ -25,11 +25,18 @@ from plot import plot_crossplot, plot_logs_columns
 
 # from models.nn_model import nn_model
 # load customized functions and requried dataset
-from util import (CV_weighted, alias_dict, get_alias, get_mnemonic,
-                  get_sample_weight, get_sample_weight2, las_data_DTSM_QC,
-                  process_las)
+from util import (
+    CV_weighted,
+    alias_dict,
+    get_alias,
+    get_mnemonic,
+    get_sample_weight,
+    get_sample_weight2,
+    las_data_DTSM_QC,
+    process_las,
+)
 
-pio.renderers.default='browser'
+pio.renderers.default = "browser"
 
 # change working directory to current file directory
 path = pathlib.Path(__file__).parent
@@ -41,47 +48,51 @@ os.chdir(path)
 #%%  TEST 2: split train/test among las files (recommended)
 
 # # choose 7 features/predictors (not including 'DTSM')
-# TEST_folder = '7features_LOOCV_las'
-# target_mnemonics = ['DTCO', 'NPHI', 'DPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
+# TEST_folder = "7features_LOOCV_las"
+# target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
 
-# # folder to store plots, will create one if not exists
-# TEST_folder = '2features_LOOCV_las'
-# target_mnemonics = ['DTCO', 'RHOB']
+# # choose 3 features/predictors (not including 'DTSM')
+# TEST_folder = "3features_LOOCV_las"
+# target_mnemonics = ["DTCO", "NPHI", "GR"]
 
-# # folder to store plots, will create one if not exists
-# TEST_folder = '5features_LOOCV_las'
-# target_mnemonics = ['DTCO', 'NPHI', 'RHOB', 'GR', 'RT']
+# # choose 3 features/predictors (not including 'DTSM')
+# TEST_folder = "3features_LOOCV_las2"
+# target_mnemonics = ["DTCO", "GR", "RT"]
 
-# # folder to store plots, will create one if not exists
-# TEST_folder = '3features_LOOCV_las'
-# target_mnemonics = ['DTCO', 'NPHI', 'RHOB']
+# # # choose 6 features/predictors (not including 'DTSM')
+# TEST_folder = "6features_LOOCV_las"
+# target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI"]
 
-# choose 8 features/predictors (not including 'DTSM')
-TEST_folder = '7features_LOOCV_las_tuning'
-target_mnemonics = ['DTCO', 'NPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
+# # # choose 6 features/predictors (not including 'DTSM')
+# TEST_folder = "6features_LOOCV_las2"
+# target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ"]
 
 
-if not os.path.exists(f'{path}/predictions/{TEST_folder}'):
-    os.mkdir(f'{path}/predictions/{TEST_folder}')
+if not os.path.exists(f"{path}/predictions/{TEST_folder}"):
+    os.mkdir(f"{path}/predictions/{TEST_folder}")
 
-target_mnemonics = target_mnemonics + ['DTSM'] # 'DTSM' is a response variable
+target_mnemonics = target_mnemonics + ["DTSM"]  # 'DTSM' is a response variable
 las_dict = dict()
 
 # get the data that corresponds to terget mnemonics
-for key in las_data_DTSM.keys():
-    print(f'Loading {key}')
-    df = las_data_DTSM[key]
+for key in las_data_DTSM_QC.keys():
+    print(f"Loading {key}")
+    df = las_data_DTSM_QC[key]
 
     df = process_las().despike(df, window_size=5)
-    
-    df = process_las().get_df_by_mnemonics(df=df, target_mnemonics=target_mnemonics, strict_input_output=True)
 
-    if (df is not None) and len(df>1):
+    df = process_las().get_df_by_mnemonics(
+        df=df, target_mnemonics=target_mnemonics, strict_input_output=True
+    )
+
+    if (df is not None) and len(df > 1):
         las_dict[key] = df
 
-print(f'Total {len(las_dict.keys())} las files loaded and total {sum([len(i) for i in las_dict.values()])} rows of data!')
+print(
+    f"Total {len(las_dict.keys())} las files loaded and total {sum([len(i) for i in las_dict.values()])} rows of data!"
+)
 
-Xy = pd.concat([las_dict[k] for k in las_dict.keys() ], axis=0)
+Xy = pd.concat([las_dict[k] for k in las_dict.keys()], axis=0)
 
 X_train = Xy.iloc[:, :-1]
 y_train = Xy.iloc[:, -1:]
@@ -93,21 +104,19 @@ param_distributions = {
     "min_child_weight": np.arange(0.01, 0.4, 0.01),
     "learning_rate": np.logspace(-3, -1),
     "subsample": np.arange(0.7, 1.0, 0.1),
-    "lambda": range(1, 100)
+    "lambda": range(1, 100),
 }
 
 
 RandCV = RandomizedSearchCV(
-            estimator=XGB(tree_method='hist', objective='reg:squarederror'),
-            param_distributions=param_distributions,
-            n_iter=10,
-            scoring='neg_mean_squared_error',
-            verbose=2,
+    estimator=XGB(tree_method="hist", objective="reg:squarederror"),
+    param_distributions=param_distributions,
+    n_iter=10,
+    scoring="neg_mean_squared_error",
+    verbose=2,
 )
 
 RandCV.fit(X=X_train, y=y_train)
 
-print('best parameters:', tune_search.best_params_) 
-print('Completed training with all models!')
-
-
+print("best parameters:", RandCV.best_params_)
+print("Completed training with all models!")

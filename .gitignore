@@ -7,5 +7,6 @@
 !alias_dict.pickle
 !*.csv
 
+data/
 plots/
 predictions/
