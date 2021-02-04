@@ -1,25 +1,61 @@
-import lasio
-import pandas as pd
 
-# you model should be a function like below
+from xgboost import XGBRegressor as XGB
 
+# choose the best model with tuned hyper parameters
 
-def ratio_model(las=None):
-    """
-    input: path to any las file
-    output: a pd.DataFrame with the length of input las, columns = ['DEPT', 'DTSM']
-    """
-    try:
-        df = lasio.read(las).df()
+model_7 = XGB(
+    tree_method="hist",
+    objective="reg:squarederror",
+    subsample=0.76,
+    n_estimators=250,
+    min_child_weight=0.02,
+    max_depth=3,
+    learning_rate=0.052,
+    reg_lambda=33,
+)
 
-        # lasio reads all las 'DEPT' as index, for convenience, we recreate 'DEPT' column
-        df["DEPT"] = df.index
-        df = df[["DEPT", "DTSM"]]
+# target_mnemonics_3 = ["DTCO", "NPHI", "GR"]
+params = {
+    "subsample": 0.9999999999999999,
+    "n_estimators": 200,
+    "min_child_weight": 0.23,
+    "max_depth": 5,
+    "learning_rate": 0.029470517025518096,
+    "lambda": 68,
+}
+model_3_1 = XGB(**params)
 
-        df["DTSM"] = 120  # predict DTSM at all depth to be 120, for testing only
-        return df
+# target_mnemonics_3 = ["DTCO", "GR", "RT"]
+params = {
+    "subsample": 0.7999999999999999,
+    "n_estimators": 250,
+    "min_child_weight": 0.22,
+    "max_depth": 5,
+    "learning_rate": 0.03906939937054615,
+    "lambda": 18,
+}
+model_3_2 = XGB(**params)
 
-    except:
-        # las should have minimum 'DEPT' and 'DTSM' two curves, or else there is no point
-        # training or predictiong 'DTSM' in this case
-        print("Missing 'DEPT' and 'DTSM' curves, no predictions were made!")
+# target_mnemonics_6 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT"]
+params = {
+    "subsample": 0.7999999999999999,
+    "n_estimators": 100,
+    "min_child_weight": 0.39,
+    "max_depth": 5,
+    "learning_rate": 0.0625055192527397,
+    "lambda": 59,
+}
+model_6_1 = XGB(**params)
+
+#% top part with 6 features
+target_mnemonics_6 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "PEFZ"]
+
+params = {
+    "subsample": 0.7,
+    "n_estimators": 200,
+    "min_child_weight": 0.03,
+    "max_depth": 4,
+    "learning_rate": 0.03556480306223128,
+    "lambda": 36,
+}
+model_6_2 = XGB(**params)

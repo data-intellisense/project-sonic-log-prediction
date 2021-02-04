@@ -13,60 +13,21 @@ from sklearn.base import clone
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
 
-path = pathlib.Path(__file__).parent
-
-#%% special case, create alias_dict
-# import pandas as pd
-# import pickle
-# import lasio
-
-# df = pd.read_csv("data/grouped_mnemonics_corrected.csv")
-# df.head(10)
-
-# alias_dict = dict()
-# for ix, m1, m2, _ in df.itertuples():
-#     alias_dict[m1] = m2
-
-# with open("data/alias_dict.pickle", "wb") as f:
-#     pickle.dump(alias_dict, f)
-
-
-#%% load necessary data for main.py
-
-with open(f"{path}/data/las_data_DTSM_QC.pickle", "rb") as f:
-    las_data_DTSM_QC = pickle.load(f)
-
-#%% mnemonics dictionary
-
-# get las_lat_lon
-with open(f"{path}/data/las_lat_lon.pickle", "rb") as f:
-    las_lat_lon = pickle.load(f)
-
-# get the alias_dict, required
-with open(f"{path}/data/alias_dict.pickle", "rb") as f:
-    alias_dict = pickle.load(f)
 
 # given a mnemonic, find all of its alias
-def get_alias(mnemonic, alias_dict=alias_dict):
+def get_alias(mnemonic, alias_dict=None):
     alias_dict = alias_dict or {}
     return [k for k, v in alias_dict.items() if mnemonic in v]
 
 
 # given a alias, find its corresponding one and only mnemonic
 # return a mnemonis if found, or else ''
-def get_mnemonic(alias=None, alias_dict=alias_dict):
+def get_mnemonic(alias=None, alias_dict=None):
     alias_dict = alias_dict or {}
     try:
         return [v for k, v in alias_dict.items() if alias == k][0]
     except:
         return ""
-
-
-if __name__ == "__main__":
-
-    print(get_alias("PEFZ", alias_dict=alias_dict))
-
-    print(get_mnemonic(alias="MODT", alias_dict=alias_dict))
 
 
 #%% read las, return curves and data etc.
@@ -192,7 +153,6 @@ def get_sample_weight2(
     las_dict=None,
     vertical_anisotropy=0.01,
     las_lat_lon=None,
-    las_data_DTSM=None,
 ):
     """
     sample weight based on horizontal and vertical distance between wells
@@ -232,7 +192,6 @@ def get_sample_weight2_TEST(
     las_dict=None,
     vertical_anisotropy=0.01,
     las_lat_lon=None,
-    las_data_DTSM=None,
 ):
     """
     sample weight based on horizontal and vertical distance between wells
@@ -341,7 +300,7 @@ class process_las:
 
         return df
 
-    def keep_valid_DTSM_only(self, df=None, alias_dict=alias_dict):
+    def keep_valid_DTSM_only(self, df=None, alias_dict=None):
         """
         return a df with rows of valid DTSM data
         """
@@ -377,7 +336,7 @@ class process_las:
 
         return df
 
-    def load_test_No_DTSM(self, df=None, alias_dict=alias_dict):
+    def load_test_No_DTSM(self, df=None, alias_dict=None):
         """
         return a df with selected mnemonics/alias
         """
@@ -390,7 +349,7 @@ class process_las:
         return df
 
     def get_df_by_mnemonics(
-        self, df=None, target_mnemonics=None, strict_input_output=True, drop_na=True
+        self, df=None, target_mnemonics=None, alias_dict=None, strict_input_output=True, drop_na=True
     ):
         """
         useage: get a cleaned dataframe by given mnemonics,

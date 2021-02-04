@@ -12,7 +12,9 @@ import pandas as pd
 import re
 
 from plot import plot_logs_columns
-from util import alias_dict, read_las, process_las, get_mnemonic, get_alias
+from util import read_las, process_las, get_mnemonic, get_alias
+
+from load_pickle import alias_dict
 
 # modify alias_dict
 alias_dict_test = dict(alias_dict, **dict(SPHI_LS="NPHI"))

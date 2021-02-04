@@ -15,6 +15,18 @@ import re
 from plot import plot_logs_columns
 from util import alias_dict, read_las, process_las, get_mnemonic, get_alias
 
+#%% create alias_dict
+
+# df = pd.read_csv("data/grouped_mnemonics_corrected.csv")
+# df.head(10)
+
+# alias_dict = dict()
+# for ix, m1, m2, _ in df.itertuples():
+#     alias_dict[m1] = m2
+
+# with open("data/alias_dict.pickle", "wb") as f:
+#     pickle.dump(alias_dict, f)
+
 
 #%% read all las files to df, keep all and valid DTSM only, and store to pickle file format
 
@@ -154,3 +166,19 @@ for WellName in las_data_DTSM_QC.keys():
 # write las_data_DTSM
 with open("data/las_data_DTSM_QC.pickle", "wb") as f:
     pickle.dump(las_data_DTSM_QC, f)
+
+
+#%% write test_list
+# with open("data/las_data_DTSM_QC.pickle", "rb") as f:
+#     las_data_DTSM_QC = pickle.load(f)
+
+target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
+
+test_list=[]
+for WellName, df in las_data_DTSM_QC.items():
+    if process_las().get_df_by_mnemonics(df=df, target_mnemonics=target_mnemonics) is not None:
+        test_list.append(WellName)
+    print(df.columns)
+
+test_list = pd.DataFrame(test_list, columns=['Test LAS'])
+test_list.to_csv('data/test_list.csv')

@@ -20,18 +20,15 @@ from xgboost import XGBRegressor as XGB
 
 from plot import plot_crossplot, plot_logs_columns
 
-# from models.nn_model import nn_model
+from load_pickle import las_data_DTSM_QC, las_lat_lon, alias_dict
+
 # load customized functions and requried dataset
 from util import (
-    CV_weighted,
-    alias_dict,
     get_alias,
     get_mnemonic,
     get_sample_weight,
-    get_sample_weight2,
-    las_data_DTSM_QC,
-    process_las,
-    las_lat_lon,
+    get_sample_weight2,    
+    process_las
 )
 
 pio.renderers.default = "browser"

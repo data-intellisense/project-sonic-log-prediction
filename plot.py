@@ -11,9 +11,10 @@ import plotly.io as pio
 from plotly.subplots import make_subplots
 from sklearn.metrics import mean_squared_error
 
-from util import (alias_dict, df_test, get_alias, get_mnemonic,
-                  las_lat_lon, las_name_test, las_test, get_sample_weight, get_sample_weight2,
-                  get_distance_weight)
+from util import (get_alias, get_mnemonic, las_name_test, las_test, get_sample_weight, 
+                  get_sample_weight2, get_distance_weight)
+
+from load_pickle import las_data_DTSM_QC, las_lat_lon, alias_dict
 
 pio.renderers.default = "browser"
 
@@ -215,7 +216,7 @@ def plot_logs_columns(
     columns = df.columns.map(alias_dict)
     tot_cols = [['DTCO', 'DTSM'],                   #  row=1, col=1
                 ['RHOB'],                           #  row=1, col=2
-                ['DPHI'],                           #  row=1, col=3
+               #['DPHI'],                           #  row=1, col=3
                 ['NPHI'],                           #  row=1, col=4
                 ['GR'],                             #  row=1, col=5
                 ['RT'],                             #  row=1, col=6
