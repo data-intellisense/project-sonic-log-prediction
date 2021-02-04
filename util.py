@@ -16,6 +16,7 @@ from sklearn.model_selection import KFold
 
 # given a mnemonic, find all of its alias
 def get_alias(mnemonic, alias_dict=None):
+    assert alias_dict is not None, 'alias_dict is None, assign alias_dict!'
     alias_dict = alias_dict or {}
     return [k for k, v in alias_dict.items() if mnemonic in v]
 
@@ -23,6 +24,7 @@ def get_alias(mnemonic, alias_dict=None):
 # given a alias, find its corresponding one and only mnemonic
 # return a mnemonis if found, or else ''
 def get_mnemonic(alias=None, alias_dict=None):
+    assert alias_dict is not None, 'alias_dict is None, assign alias_dict!'
     alias_dict = alias_dict or {}
     try:
         return [v for k, v in alias_dict.items() if alias == k][0]
@@ -304,6 +306,7 @@ class process_las:
         """
         return a df with rows of valid DTSM data
         """
+        assert alias_dict is not None, 'alias_dict is None, assign alias_dict!'
         # deep copy of df so manipulation here won't alter original df
         df = df.copy()
 
@@ -340,6 +343,9 @@ class process_las:
         """
         return a df with selected mnemonics/alias
         """
+
+        assert alias_dict is not None, 'alias_dict is None, assign alias_dict!'
+
         # deep copy of df so manipulation here won't alter original df
         df = df.copy()
 
@@ -357,7 +363,7 @@ class process_las:
         strict_input_output: if true, only output a df only if all target mnemonics are found in las, output None otherwise
             if false, will output a df with all possible mnemonis found in las
         """
-
+        assert alias_dict is not None, 'alias_dict is None, assign alias_dict!'
         df = df.copy()
         # check required parameters
         if target_mnemonics is None:

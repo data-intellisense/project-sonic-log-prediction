@@ -204,7 +204,7 @@ def plot_logs_columns(
     plot_save_file_name=None,
     plot_save_path=None,
     plot_save_format=None,  # availabe format: ["png", "html"]
-    alias_dict=alias_dict,
+    alias_dict=None,
 ):
     '''
     complex plot that plots curves in multiple columns, good for detailed analysis of curves
@@ -236,7 +236,7 @@ def plot_logs_columns(
         temp = []
         for i in df.columns:
                         
-            if get_mnemonic(i) in cols: 
+            if get_mnemonic(i, alias_dict=alias_dict) in cols: 
                 temp.append(i)
         if len(temp)>0:
             tot_cols_old.append(temp)

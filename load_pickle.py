@@ -15,3 +15,7 @@ with open(f"data/leaderboard_1/las_lat_lon.pickle", "rb") as f:
 # get the alias_dict, required
 with open(f"data/alias_dict.pickle", "rb") as f:
     alias_dict = pickle.load(f)
+
+with open(f"data/leaderboard_1/las_data_TEST.pickle", "rb") as f:
+    las_data_TEST = pickle.load(f)
+    

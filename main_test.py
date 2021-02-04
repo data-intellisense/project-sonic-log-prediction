@@ -21,7 +21,7 @@ from sklearn.preprocessing import RobustScaler
 
 from plot import plot_crossplot, plot_logs_columns
 
-from load_pickle import las_data_DTSM_QC, las_lat_lon, lat_lon_TEST, alias_dict
+from load_pickle import las_data_DTSM_QC, las_lat_lon, lat_lon_TEST, alias_dict, las_data_TEST
 
 # models for prediction
 from models.models import model_7, model_3_1, model_3_2, model_6_1, model_6_2
@@ -32,7 +32,8 @@ from util import (
     get_mnemonic,
     get_sample_weight,
     get_sample_weight2,    
-    process_las
+    process_las,
+    get_sample_weight2_TEST
 )
 
 
@@ -50,7 +51,6 @@ def test_predict(
     lat_lon_TEST=None,
     las_lat_lon=None,
     sample_weight_type=2,
-    despike=True,
     TEST_folder=None,
 ):
     TEST_folder = f"predictions/{TEST_folder}"
@@ -66,10 +66,8 @@ def test_predict(
     # prepare TEST data with terget mnemonics
     df_TEST = df_TEST.copy()
 
-    if despike:
-        df_TEST = process_las().despike(df_TEST, window_size=5)
+    df_TEST = process_las().despike(df_TEST, window_size=5)
 
-    print(df_TEST)
     df_TEST = process_las().get_df_by_mnemonics(
         df=df_TEST,
         target_mnemonics=target_mnemonics_TEST,
@@ -78,7 +76,6 @@ def test_predict(
         drop_na=False,
     )
 
-    print(df_TEST)
     print("Data df_test shape:", df_TEST.shape)
     print("Selected df_test columns:", df_TEST.columns)
 
@@ -121,7 +118,7 @@ def test_predict(
     if sample_weight_type == 2:
         sample_weight = get_sample_weight2_TEST(
                         lat_lon_TEST=lat_lon_TEST,
-                        mid_depth_TEST=df_TEST.index.mean(),
+                        mid_depth_TEST=df_TEST.index.values.mean(),
                         las_dict=las_dict,
                         vertical_anisotropy=0.01,
                         las_lat_lon=las_lat_lon,
@@ -187,7 +184,7 @@ for WellName in Group1:
         despike=True,
         TEST_folder="TEST",
     )
-
+  
     y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}.csv")
     print("X_test and y_predict length:", len(df_TEST), len(y_predict))
     print(f"Prediction results are saved at: predictions/TEST")

@@ -49,7 +49,6 @@ def train_predict(
     las_data_DTSM=None,
     las_lat_lon=None,
     sample_weight_type=2,
-    despike=True,
 ):
 
     if not os.path.exists(f"{path}/predictions/{TEST_folder}"):
@@ -62,12 +61,11 @@ def train_predict(
     for key in las_data_DTSM.keys():
         print(f"Loading {key}")
         df = las_data_DTSM[key]
-
-        if despike:
-            df = process_las().despike(df, window_size=5)
+        
+        df = process_las().despike(df, window_size=5)
 
         df = process_las().get_df_by_mnemonics(
-            df=df, target_mnemonics=target_mnemonics, strict_input_output=True
+            df=df, target_mnemonics=target_mnemonics, strict_input_output=True, alias_dict=alias_dict
         )
 
         if (df is not None) and len(df > 1):
@@ -83,8 +81,10 @@ def train_predict(
 
     for model_name, model in models.items():
 
+        print(model)
         # reset rmse for each model
         rmse = []
+        rmse_ = []
 
         # create test/train data
         for las_name in las_dict.keys():
@@ -125,7 +125,6 @@ def train_predict(
                 sample_weight = get_sample_weight2(
                     las_name=las_name,
                     las_lat_lon=las_lat_lon,
-                    las_data_DTSM=las_data_DTSM_QC,
                     las_dict=las_dict,
                     vertical_anisotropy=0.01,
                 )
@@ -134,6 +133,7 @@ def train_predict(
             else:
                 sample_weight = None
 
+            
             # fit the model
             try:
                 model.fit(X_train, y_train, sample_weight=sample_weight)
@@ -148,7 +148,8 @@ def train_predict(
             y_predict = scaler_y.inverse_transform(model.predict(X_test).reshape(-1, 1))
 
             # calculate rmse
-            rmse.append([las_name, mean_squared_error(y_test, y_predict) ** 0.5])
+            rmse_i = mean_squared_error(y_test, y_predict) ** 0.5
+            rmse.append([las_name, rmse_i])
 
             # plot crossplot to compare y_predict vs y_actual
             plot_crossplot(
@@ -171,6 +172,7 @@ def train_predict(
                 df=Xy_test,
                 DTSM_pred=df_ypred,
                 well_name=las_name,
+                alias_dict=alias_dict,
                 plot_show=False,
                 plot_return=False,
                 plot_save_file_name=f"{model_name}-{las_name}-Prediction-Depth",
@@ -183,11 +185,14 @@ def train_predict(
             )
             print(f"{las_name}, rmse: {rmse[-1][-1]:.2f}")
 
+            rmse_.append(rmse_i)
+            print(f'Mean RMSE so far: {np.mean(rmse_):.2f}')
             # print("Only trained one stage! Remove 'break' to train all stages!")
             # break
 
         rmse = pd.DataFrame(rmse, columns=["las_name", model_name])
         rmse_test.append(rmse)
+        
 
     # # covnert rmse_test to pd.DataFrame and save to .csv
     rmse_test = pd.concat(rmse_test, axis=1)
@@ -232,6 +237,7 @@ models = {
     ),
 }
 
+# from models.models import models
 
 rmse_test, *model = train_predict(
     target_mnemonics=target_mnemonics,
