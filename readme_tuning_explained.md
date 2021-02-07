@@ -13,13 +13,16 @@
 
 ## General info
 First, one null model (all predictions are the mean of DTSM) is built. Then a simple linear regression model is built as the baseline model.
+
 Then a gradient boosting model based on xgboost.XGBRegressor(XGB) is built and tested.
+
 Then a neural network model(MLP) from sklearn is built and tested.
+
 Then XGB and MLP models are tuned using RandomizedSearchCV from sklearn and using two different Bayesian hyperparameters tuning library.
 
 
 ## Baseline model
-![Crossplot](./readme_resources/['DTCO', 'DTSM']-Crossplot.png)
+![Crossplot](./readme_resources/['DTCO','DTSM']-Crossplot.png)
 
 ## Technologies
 * Tech 1 - version 1.0
