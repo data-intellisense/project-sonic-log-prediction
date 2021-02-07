@@ -22,7 +22,7 @@ Then XGB and MLP models are tuned using RandomizedSearchCV from sklearn and usin
 
 
 ## Baseline model
-![Crossplot](./readme_resources/['DTCO','DTSM']-Crossplot.png)
+![Crossplot](./readme_resources/Crossplot-DTCO-DTSM.png)
 
 ## Technologies
 * Tech 1 - version 1.0
