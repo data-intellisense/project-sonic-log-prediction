@@ -228,7 +228,8 @@ best = fmin(
 )
 
 print(f'Best:{best}')
-
+# best rmse loss: 6.0976406
+# Best:{'learning_rate': 0.17921801478908123, 'max_depth': 13, 'min_child_weight': 0.4571378438073825, 'subsample': 0.9917229046738573}
 #%% MLP tuning
 
 param_distributions = {
