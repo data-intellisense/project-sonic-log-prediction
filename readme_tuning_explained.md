@@ -2,8 +2,8 @@
 > Here I will explain how models are built and tuned for best performance!
 
 ## Table of contents
-* [General info test](#general-info)
-* [Screenshots](#screenshots-test)
+* [General info](#general-info)
+* [Baseline model](#baseline-model)
 * [Technologies](#technologies)
 * [Setup](#setup)
 * [Features](#features)
@@ -12,10 +12,14 @@
 * [Contact](#contact)
 
 ## General info
-Add more general information about project. What the purpose of the project is? Motivation?
+First, one null model (all predictions are the mean of DTSM) is built. Then a simple linear regression model is built as the baseline model.
+Then a gradient boosting model based on xgboost.XGBRegressor(XGB) is built and tested.
+Then a neural network model(MLP) from sklearn is built and tested.
+Then XGB and MLP models are tuned using RandomizedSearchCV from sklearn and using two different Bayesian hyperparameters tuning library.
 
-## Screenshots
-![Example screenshot](./img/screenshot.png)
+
+## Baseline model
+![Crossplot](./readme_resources/['DTCO', 'DTSM']-Crossplot.png)
 
 ## Technologies
 * Tech 1 - version 1.0
