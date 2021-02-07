@@ -11,11 +11,16 @@ import plotly.express as px
 import plotly.io as pio
 from sklearn.ensemble import GradientBoostingRegressor as GBR
 from sklearn.ensemble import StackingRegressor as Stack
+from sklearn.linear_model import LinearRegression, RidgeCV 
 
 from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.neural_network import MLPRegressor as MLP
 from sklearn.preprocessing import RobustScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.base import BaseEstimator, RegressorMixin
+
+from sklearn.model_selection import ShuffleSplit
 from xgboost import XGBRegressor as XGB
 import xgboost
 
@@ -105,7 +110,38 @@ Xy = pd.concat([las_dict[k] for k in las_dict.keys()], axis=0)
 X_train = Xy.iloc[:, :-1]
 y_train = Xy.iloc[:, -1:]
 
+
 dtrain = xgboost.DMatrix(data=X_train, label=y_train)
+
+
+#%% Baseline model, y_mean and linear regression 
+class MeanRegressor(BaseEstimator, RegressorMixin):
+    def __init__(self):
+        return None
+
+    def fit(self, X_train=None, y_train=None):
+        # the prediction will always be the mean of y
+        assert isinstance(X_train, pd.DataFrame)
+        assert isinstance(y_train, pd.DataFrame)
+        assert len(y_train)==len(X_train)
+        assert y_train.shape[1]==1
+
+        self.y_bar_ = np.mean(y_train.values)
+        self.y = y_train
+        return self.y_bar_
+
+    def predict(self, X_test):
+        # give back the mean of y, in the same length as input X
+        return np.ones(len(X_test)) * self.y_bar_
+
+model = MeanRegressor()
+
+for model in [MeanRegressor(), LinearRegression(), RidgeCV()]:
+    model.fit(X_train, y_train)
+
+    scores = cross_val_score(model, X_train, y_train, cv=10, scoring='neg_mean_squared_error')
+    print('rmse:', -np.mean(scores))
+
 
 #%% create XGB data matrix 
 time0=time.time()
@@ -182,6 +218,7 @@ param_distributions = {
 }
 
 
+
 # initialize the BayesOpt
 xgb_bayes = BayesianOptimization(f=xgb_func,
     pbounds=param_distributions,
@@ -195,6 +232,8 @@ xgb_bayes.maximize(
 print(xgb_bayes.max)
 print(f'finished in {time.time()-time0: .2f} s')
 
+# {'target': -10.141465, 'params': {'lambda': 3.0378649352844422, 'learning_rate': 0.09699399423098323, 'max_depth': 10.491983767203795, 'min_child_weight': 0.11404616423235531, 'subsample': 0.7545474901621302}}
+# finished in  1387.96 s
 
 #%% XGB hyperopt
 
@@ -228,9 +267,13 @@ best = fmin(
 )
 
 print(f'Best:{best}')
+print(f'finished in {time.time()-time0: .2f} s')
 # best rmse loss: 6.0976406
 # Best:{'learning_rate': 0.17921801478908123, 'max_depth': 13, 'min_child_weight': 0.4571378438073825, 'subsample': 0.9917229046738573}
 #%% MLP tuning
+
+X_train = RobustScaler().fit_transform(X_train)
+y_train = RobustScaler().fit_transform(y_train)
 
 param_distributions = {
     "hidden_layer_sizes": [(100,), (30, 30), (200,), (20, 20, 20)],

@@ -236,9 +236,10 @@ def train_predict(
 TEST_folder = "6features_LOOCV_las"
 target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
 
-from models.models import model_mlp_7 as models
+from models.models import model_7_2 as models
 
 # from models.models import models
+time0 = time.time()
 
 rmse_test, *model = train_predict(
     target_mnemonics=target_mnemonics,
@@ -246,14 +247,14 @@ rmse_test, *model = train_predict(
     TEST_folder=TEST_folder,
     las_data_DTSM=las_data_DTSM_QC,
     las_lat_lon=las_lat_lon,
-    sample_weight_type=2,
+    sample_weight_type=None,
 )
 
 # # pickle model and save
 # with open(f"models/model_{TEST_folder}.pickle", "wb") as f:
 #     pickle.dump(model, f)
 
-print("Completed training with all models!")
+print(f"Completed training with all models in {time.time()-time0:.1f} seconds!")
 
 rmse_test_ = dict()
 for col in rmse_test.columns[1:]:
