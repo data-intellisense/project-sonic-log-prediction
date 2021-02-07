@@ -2,8 +2,8 @@
 import pickle
 import random
 from plot import plot_logs_columns, plot_3DWell
-from util import alias_dict, get_mnemonic, read_las, process_las, las_name_test, las_data_DTSM
-
+from util import get_mnemonic, read_las, process_las, las_name_test
+from load_pickle import alias_dict
 
 #%% plot wellbores in 3D, weighted and un-weighted
 
@@ -44,8 +44,6 @@ medfilt(df['DTCO'].values, kernel_size=3)
 
 df = process_las().despike(df)
 plot_logs_columns(df)
-
-#%% -----------------------------------------------------------------------------------------
 
 #%% -----------------------------------------------------------------------------------------
 # create coordinate plot

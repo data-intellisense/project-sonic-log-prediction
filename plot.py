@@ -313,11 +313,13 @@ def plot_logs_columns(
 #%% plot predicted and actual in a crossplot
 def plot_crossplot(y_actual, y_predict, text=None,
     axis_range = 350,
+    diagnal_line=False,
     plot_show=True,
     plot_return=False,
     plot_save_file_name=None,
     plot_save_path=None,
     plot_save_format=None,  # availabe format: ["png", "html"])
+
 ):
     
     assert len(y_actual)==len(y_predict)
@@ -332,12 +334,17 @@ def plot_crossplot(y_actual, y_predict, text=None,
         title_text = f'rmse_test:{rmse_test:.2f}'
 
     fig = px.scatter(y_pred_act, x='Actual', y='Predict')
-    fig.add_traces(px.line(abline, x='Actual', y='Predict').data[0])
+
+    if diagnal_line:
+        fig.add_traces(px.line(abline, x='Actual', y='Predict').data[0])
+        
+    
     fig.update_layout(title=dict(text=title_text),
                         width=1200,
                         height=1200,
-                        xaxis_range=[0,axis_range],
-                        yaxis_range=[0,axis_range])
+                        # xaxis_range=[0,axis_range],
+                        # yaxis_range=[0,axis_range]
+                        )
     
     # show and save plot
     if plot_show:

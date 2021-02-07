@@ -7,20 +7,12 @@ import plotly.express as px
 import plotly.io as pio
 
 from util import get_mnemonic, get_alias,read_las, process_las
-from plot import plot_logs_columns
+from plot import plot_logs_columns, plot_crossplot
 from sklearn.neighbors import LocalOutlierFactor
 
 pio.renderers.default = 'browser'
 
-with open('data/las_data.pickle', 'rb') as f:
-    las_data = pickle.load(f)
-
-with open('data/las_data_DTSM.pickle', 'rb') as f:
-    las_data_DTSM = pickle.load(f)
-
-with open('data/las_data_DTSM_QC.pickle', 'rb') as f:
-    las_data_DTSM_QC = pickle.load(f)
-
+from load_pickle import alias_dict, las_data_DTSM_QC
 # las_data_DTSM['000-0052442d0162_TGS']
 
 #%% plot all las
@@ -104,7 +96,7 @@ for key in las_data_DTSM_QC.keys():
                 df_target_mnemonics_count2[key] += [alias] 
 
         for col in df.columns:        
-            if get_mnemonic(col) == m:
+            if get_mnemonic(col, alias_dict=alias_dict) == m:
                 arr = df[col].values.reshape(-1,1)
                 arr_avg = np.mean(arr)
                 if m not in df_target_mnemonics.keys():
@@ -228,7 +220,7 @@ for key in las_data_DTSM_QC.keys():
                 df_target_mnemonics_count2[key] += [alias] 
 
         for col in df.columns:        
-            if get_mnemonic(col) == m:
+            if get_mnemonic(col, alias_dict=alias_dict) == m:
                 arr = df[col].values.reshape(-1,1)
                 arr_avg = np.mean(arr)
                 if m not in df_target_mnemonics.keys():
@@ -276,3 +268,39 @@ for key in las_data_DTSM_QC.keys():
                         las2qc[m].append(key)
 
                        
+#%% plot crossplot
+
+mnemonics_x = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
+mnemonics_y = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
+
+
+target_mnemonics_ = [[x, y] for x in mnemonics_x for y in mnemonics_y if x!=y]
+
+for target_mnemonics in target_mnemonics_:
+    las_dict = dict()
+    for key in las_data_DTSM_QC.keys():
+        
+        df = las_data_DTSM_QC[key]
+        print('processing:\t', key)
+
+        df = process_las().despike(df, window_size=5)
+
+        df = process_las().get_df_by_mnemonics(
+            df=df, target_mnemonics=target_mnemonics, strict_input_output=True, alias_dict=alias_dict
+        )
+
+        if (df is not None) and len(df > 1):                
+            las_dict[key] = df
+        
+    df_xp = pd.concat([las_dict[k] for k in las_dict.keys()], axis=0)
+
+    plot_crossplot(
+        y_actual=df_xp[target_mnemonics[1]].values,
+        y_predict=df_xp[target_mnemonics[0]].values,
+        text=target_mnemonics,
+        plot_show=True,
+        plot_return=False,
+        plot_save_file_name=f"{target_mnemonics}-Crossplot",
+        plot_save_path=f"plots/crossplot",
+        plot_save_format=["png", 'html']
+    )

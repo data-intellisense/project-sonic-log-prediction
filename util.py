@@ -407,9 +407,14 @@ class process_las:
                 df_ = temp
             else:
                 df_ = np.c_[df_, temp]
+        if df_ is None:
+            return None
+        else:
+            df_ = pd.DataFrame(df_, columns=df_cols)
+            df_.index = df.index
 
-        df_ = pd.DataFrame(df_, columns=df_cols)
-        df_.index = df.index
+        # add a 'DEPTH' feature as it may be useful
+        # df_['DEPTH'] = df.index
 
         # dropped rows with na in DTSM column
         # try:

@@ -17,23 +17,36 @@ estimators = [
     # ('MLP', MLP())
 ]
 
-model = StackingRegressor(estimators=estimators, final_estimator=LSVR())
-models = {'stack_models': model}
+# model = StackingRegressor(estimators=estimators, final_estimator=LSVR())
+# models = {'stack_models': model}
 # # choose the best model with tuned hyper parameters
 
-# model_7 = XGB(
-#     tree_method="hist",
-#     objective="reg:squarederror",
-#     subsample=0.76,
-#     n_estimators=250,
-#     min_child_weight=0.02,
-#     max_depth=3,
-#     learning_rate=0.052,
-#     reg_lambda=33,
-# )
+# neural network model
+params_mlp_7 = {'learning_rate_init': 0.01, 'hidden_layer_sizes': (100,), 'alpha': 0.001}
+model_mlp_7 = {'MLP_7':MLP(random_state=42, learning_rate='adaptive', activation='relu', max_iter=200, early_stopping=True, **params_mlp_7)}
+
+# target_mnemonics = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT", "PEFZ"]
+params_7 = {'subsample': 0.7999999999999999, 'n_estimators': 250, 
+            'min_child_weight': 0.31, 'max_depth': 3, 
+            'learning_rate': 0.022229964825261943, 'lambda': 96}
+model_7 = {
+    "XGB": XGB(**params_7,
+        tree_method="hist",
+        objective="reg:squarederror"
+    )
+}
 
 
+params_6_0 = {'subsample': 0.7999999999999999, 'n_estimators': 250, 
+            'min_child_weight': 0.23, 'max_depth': 7, 
+            'learning_rate': 0.03556480306223128, 'lambda': 81}
 
+model_6_0 = {
+    "XGB": XGB(**params_6_0,
+        tree_method="hist",
+        objective="reg:squarederror"
+    )
+}
 # # target_mnemonics_3 = ["DTCO", "NPHI", "GR"]
 # params = {
 #     "subsample": 0.9999999999999999,

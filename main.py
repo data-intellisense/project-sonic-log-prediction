@@ -28,7 +28,8 @@ from util import (
     get_mnemonic,
     get_sample_weight,
     get_sample_weight2,    
-    process_las
+    process_las,
+    las_name_test
 )
 
 pio.renderers.default = "browser"
@@ -69,6 +70,16 @@ def train_predict(
         )
 
         if (df is not None) and len(df > 1):
+            
+            # add 'DEPTH' as a feature and rearrange columns
+            df['DEPTH']=df.index 
+            cols = df.columns.to_list()
+            df = df[cols[-1:]+cols[:-1]]
+
+            # df[['LAT','LON']] = las_lat_lon[key]
+            # cols = df.columns.to_list()
+            # df = df[cols[-3:]+cols[:-3]]
+
             las_dict[key] = df
 
     print(
@@ -102,7 +113,8 @@ def train_predict(
 
             X_train = Xy_train.values[:, :-1]
             y_train = Xy_train.values[:, -1:]
-            X_test = Xy_test.values[:, :-1]
+            
+            X_test = Xy_test.values[:, :-1]            
             y_test = Xy_test.values[:, -1:]
 
             # scale train data
@@ -140,9 +152,10 @@ def train_predict(
             except:
                 model.fit(X_train, y_train)
                 print(
-                    "Mode does not accept sample weight so sample weight was not used in training!"
+                    "Model does not accept sample weight so sample weight was not used in training!"
                 )
 
+            
             # scale test data and predict, and scale back prediction
             X_test = scaler_x.transform(X_test)
             y_predict = scaler_y.inverse_transform(model.predict(X_test).reshape(-1, 1))
@@ -220,22 +233,10 @@ def train_predict(
 # target_mnemonics = ['DTCO', 'NPHI', 'RHOB']
 
 # choose 8 features/predictors (not including 'DTSM')
-TEST_folder = "7features_LOOCV_las"
+TEST_folder = "6features_LOOCV_las"
 target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
 
-# assemble all models in a dictionary
-models = {
-    "XGB": XGB(
-        tree_method="hist",
-        objective="reg:squarederror",
-        subsample=0.76,
-        n_estimators=250,
-        min_child_weight=0.02,
-        max_depth=3,
-        learning_rate=0.052,
-        reg_lambda=33,
-    ),
-}
+from models.models import model_mlp_7 as models
 
 # from models.models import models
 
