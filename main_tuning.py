@@ -52,8 +52,8 @@ os.chdir(path)
 #%%  TEST 2: split train/test among las files (recommended)
 
 # # choose 7 features/predictors (not including 'DTSM')
-TEST_folder = "7features_LOOCV_las"
-target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
+TEST_folder_7 = "7features_LOOCV_las"
+target_mnemonics_7 = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
 
 # TEST_folder = "6features_LOOCV_las"
 # target_mnemonics = ["RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
@@ -74,6 +74,9 @@ target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
 # TEST_folder = "6features_LOOCV_las2"
 # target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ"]
 
+
+TEST_folder = TEST_folder_7
+target_mnemonics = target_mnemonics_7
 
 if not os.path.exists(f"{path}/predictions/{TEST_folder}"):
     os.mkdir(f"{path}/predictions/{TEST_folder}")
@@ -195,7 +198,8 @@ print(f'Feature importance:\n{df.columns} \n{xgb_feature_importance}')
 
 xgb_feature_importance_df = pd.DataFrame(np.c_[df.columns[:-1].values.reshape(-1,1), 
     np.array(xgb_feature_importance).reshape(-1,1)], columns=['feature', 'importance'])
-px.bar(xgb_feature_importance_df, x='feature', y='importance')
+fig = px.bar(xgb_feature_importance_df, x='feature', y='importance')
+fig.write_image('readme_resources/xgb_7feature_importance.png')
 
 
 #%% XGB Bayesian optimization

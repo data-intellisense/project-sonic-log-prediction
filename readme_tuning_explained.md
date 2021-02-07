@@ -22,13 +22,14 @@ Then XGB and MLP models are tuned using RandomizedSearchCV from sklearn and usin
 
 
 ## Baseline model
-![Crossplot](./readme_resources/Crossplot-DTCO-DTSM.png)
 
-## Technologies
+
+## Feature importance
+
 * Tech 1 - version 1.0
 * Tech 2 - version 2.0
 * Tech 3 - version 3.0
-
+![Feature importance](./readme_resources/xgb_7feature_importance.png)
 ## Setup
 Describe how to install / setup your local environement / add link to demo version.
 
