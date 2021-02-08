@@ -2,20 +2,39 @@
 #%% load necessary data for main.py
 import pickle
 
-with open(f"data/las_data_DTSM_QC.pickle", "rb") as f:
-    las_data_DTSM_QC = pickle.load(f)
+try:
+    with open(f"data/las_data_DTSM_QC.pickle", "rb") as f:
+        las_data_DTSM_QC = pickle.load(f)
+except:
+    print(" No 'las_data_DTSM_QC.pickle' loaded as it is NOT available!")
+    las_data_DTSM_QC = None
 
 # get las_lat_lon
-with open(f"data/las_lat_lon.pickle", "rb") as f:
-    las_lat_lon = pickle.load(f)
+try:
+    with open(f"data/las_lat_lon.pickle", "rb") as f:
+        las_lat_lon = pickle.load(f)
+except:
+    print(" No 'las_lat_lon.pickle' loaded as it is NOT available!")
+    las_lat_lon = None
 
-with open(f"data/leaderboard_1/las_lat_lon.pickle", "rb") as f:
-    lat_lon_TEST = pickle.load(f)
+try:
+    with open(f"data/leaderboard_1/las_lat_lon.pickle", "rb") as f:
+        lat_lon_TEST = pickle.load(f)
+except:
+    print(" No 'las_lat_lon.pickle' loaded as it is NOT available!")
+    lat_lon_TEST = None
 
 # get the alias_dict, required
-with open(f"data/alias_dict.pickle", "rb") as f:
-    alias_dict = pickle.load(f)
+try:
+    with open(f"data/alias_dict.pickle", "rb") as f:
+        alias_dict = pickle.load(f)
+except:
+    print(" No 'alias_dict.pickle' loaded as it is NOT available!")
+    alias_dict = None
 
-with open(f"data/leaderboard_1/las_data_TEST.pickle", "rb") as f:
-    las_data_TEST = pickle.load(f)
-    
+try:
+    with open(f"data/leaderboard_1/las_data_TEST.pickle", "rb") as f:
+        las_data_TEST = pickle.load(f)
+except:
+    print(" No 'las_data_TEST.pickle' loaded as it is NOT available!")
+    las_data_TEST = None

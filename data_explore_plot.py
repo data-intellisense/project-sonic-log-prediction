@@ -4,12 +4,13 @@ import numpy as np
 import pandas as pd
 import lasio
 import plotly.express as px
+import plotly.graph_objects as go
 import plotly.io as pio
 
 from util import get_mnemonic, get_alias,read_las, process_las
 from plot import plot_logs_columns, plot_crossplot
 from sklearn.neighbors import LocalOutlierFactor
-
+from itertools import product
 pio.renderers.default = 'browser'
 
 from load_pickle import alias_dict, las_data_DTSM_QC
@@ -40,13 +41,15 @@ from load_pickle import alias_dict, las_data_DTSM_QC
 
 #%% plot all las with new QC'd DTSM
 
-# for key in las_data_DTSM_QC.keys():
-#     plot_logs_columns(las_data_DTSM_QC[key],
-#                       well_name=key,
-#                       plot_show=False,
-#                       plot_save_file_name=f'{key}_DTSM',
-#                       plot_save_path='plots/plots_las_DTSM_QC',
-#                       plot_save_format=['png'])
+for key in las_data_DTSM_QC.keys():
+    if '001' in key:
+        plot_logs_columns(las_data_DTSM_QC[key],
+                        well_name=key,
+                        alias_dict=alias_dict,
+                        plot_show=False,
+                        plot_save_file_name=f'{key}_DTSM',
+                        plot_save_path='plots/plots_las_DTSM_QC',
+                        plot_save_format=['png'])
 
 
 
@@ -304,3 +307,103 @@ for target_mnemonics in target_mnemonics_:
         plot_save_path=f"plots/crossplot",
         plot_save_format=["png", 'html']
     )
+
+
+#%% plot feature dependence
+
+target_mnemonics_2 = ["RT", "NPHI"]
+target_mnemonics = target_mnemonics_2 + ["DTSM"]  # 'DTSM' is a response variable
+
+Xy = process_las().get_compiled_df_from_las_dict(
+        las_data_dict=las_data_DTSM_QC,
+        target_mnemonics=target_mnemonics,
+        alias_dict=alias_dict,
+        strict_input_output=True,
+        add_DEPTH_col=False,
+        log_RT=True,
+        )
+ 
+X_train = Xy.iloc[:, :-1]
+y_train = Xy.iloc[:, -1:]
+
+# fit the model
+from models.models import model_2
+model = model_2['XGB']
+model.fit(X_train, y_train)
+
+DTCO_max, NPHI_max = X_train.quantile(q=0.99)
+DTCO_min, NPHI_min = X_train.quantile(q=0.01)
+
+x = np.linspace(DTCO_min, DTCO_max, num=50)
+y = np.linspace(NPHI_min, NPHI_max, num=50)
+xy=product(x,y)
+
+z=[]
+for (x_, y_) in xy:
+    df = pd.DataFrame([[x_,y_]], columns=target_mnemonics_2)
+    z.append(list(model_2['XGB'].predict(df))[0])
+zz = np.array(z)
+   
+xx, yy = np.meshgrid(x,y)
+xx = xx.ravel()
+yy = yy.ravel()
+
+print(Xy.describe())
+#%%
+fig = go.Figure(data=[go.Mesh3d(
+    x=xx, y=yy, z=zz, 
+    opacity=0.90,
+    color='orange',
+    colorscale=[[0, 'gold'],
+                    [0.5, 'mediumturquoise'],
+                    [1, 'magenta']],
+        
+    )]
+    )
+
+title = 'DTSM partial dependence on DCTO and NPHI'
+fig.update_layout(scene_camera=dict(eye=dict(x=2, y=-2, z=1.)),
+                      template='plotly_dark',
+                      height=1300,
+                      width=1300,                        
+                      paper_bgcolor='#000000',
+                      plot_bgcolor='#000000',
+                      title=dict(text=title, x=0.5,
+                                 xanchor='center', font=dict(color='Lime', size=20)),
+                      legend=dict(orientation='h',
+                                  yanchor='bottom',
+                                  y=0.06,
+                                  xanchor='center',
+                                  x=0.5,
+                                  ))
+
+fig.update_scenes(
+    xaxis=dict(
+        title=target_mnemonics_2[0],
+        showgrid=False,
+        showline=False,
+        showbackground=False,
+        showticklabels=True,
+        #range=[ ]
+    ),
+    yaxis=dict(
+        title=target_mnemonics_2[1],
+        showgrid=False,
+        showline=False,
+        showbackground=False,
+        showticklabels=True,
+        #range = [ ]
+    ),
+    zaxis=dict(
+        title='DTSM',
+        showgrid=False,
+        showline=False,
+        showbackground=False,
+        showticklabels=True,
+        # range=(25000, 0)
+    ),
+),
+
+fig.show()
+fig.write_html(f'plots/plots_dependence/dependence_{target_mnemonics_2[0]}_{target_mnemonics_2[1]}_DTSM.html')
+fig.write_image(f'plots/plots_dependence/dependence_{target_mnemonics_2[0]}_{target_mnemonics_2[1]}_DTSM.png')

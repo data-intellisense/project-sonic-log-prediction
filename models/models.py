@@ -27,47 +27,48 @@ model_mlp_7 = {'MLP_7':MLP(random_state=42, learning_rate='adaptive', activation
 
 # using randomizedsearchcv, lowest rmse
 # target_mnemonics = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT", "PEFZ"]
-params_7 = {'subsample': 0.7999999999999999, 'n_estimators': 250, 
+params_xgb_7 = {'subsample': 0.7999999999999999, 'n_estimators': 250, 
             'min_child_weight': 0.31, 'max_depth': 3, 
             'learning_rate': 0.022229964825261943, 'lambda': 96}
 
-model_7 = {
-    "XGB": XGB(**params_7,
+model_xgb_7 = XGB(**params_xgb_7,
         tree_method="hist",
-        objective="reg:squarederror"
-    )
-}
+        objective="reg:squarederror")
+
 
 # using Bayesian Optimization, lowest cv rmse 10.1, loocv las rmse: 10.69 
-params_7_1 = {'lambda': 3.0378649352844422, 'learning_rate': 0.09699399423098323, 
+params_xgb_7_1 = {'lambda': 3.0378649352844422, 'learning_rate': 0.09699399423098323, 
     'max_depth': 10, 'min_child_weight': 0.11404616423235531, 'subsample': 0.7545474901621302}
-model_7_1 = {
-    "XGB": XGB(**params_7_1,
+model_xgb_7_1 = XGB(**params_xgb_7_1,
         tree_method="hist",
-        objective="reg:squarederror"
-    )
-}
+        objective="reg:squarederror")
+
 
 # using hyperopt, lowest rmse 6.1, loocv las rmse: 11.56 (with or without sample weight)
-params_7_2 = {'learning_rate': 0.17921801478908123, 'max_depth': 13, 
+params_xgb_7_2 = {'learning_rate': 0.17921801478908123, 'max_depth': 13, 
     'min_child_weight': 0.4571378438073825, 'subsample': 0.9917229046738573}
-model_7_2 = {
-    "XGB": XGB(**params_7_2,
+model_xgb_7_2 = XGB(**params_xgb_7_2,
         tree_method="hist",
-        objective="reg:squarederror"
-    )
-}
+        objective="reg:squarederror")
 
-params_6_0 = {'subsample': 0.7999999999999999, 'n_estimators': 250, 
+
+params_xgb_6_0 = {'subsample': 0.7999999999999999, 'n_estimators': 250, 
             'min_child_weight': 0.23, 'max_depth': 7, 
             'learning_rate': 0.03556480306223128, 'lambda': 81}
 
-model_6_0 = {
-    "XGB": XGB(**params_6_0,
+model_xgb_6_0 = XGB(**params_xgb_6_0,
         tree_method="hist",
-        objective="reg:squarederror"
-    )
-}
+        objective="reg:squarederror")
+
+# ['DTCO', 'NPHI']
+params_xgb_2 = {'subsample': 1, 'n_estimators': 250, 'min_child_weight': 0.36, 
+    'max_depth': 7, 'learning_rate': 0.02, 'lambda': 56}
+
+model_xgb_2 = XGB(**params_xgb_2,
+        tree_method="hist",
+        objective="reg:squarederror")
+
+
 # # target_mnemonics_3 = ["DTCO", "NPHI", "GR"]
 # params = {
 #     "subsample": 0.9999999999999999,

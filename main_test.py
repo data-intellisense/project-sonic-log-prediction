@@ -36,12 +36,10 @@ from util import (
     get_sample_weight2_TEST
 )
 
-
 pio.renderers.default = "browser"
 
 
 #%%  TEST 2: split train/test among las files (recommended)
-
 
 def test_predict(
     target_mnemonics=None,
@@ -81,33 +79,18 @@ def test_predict(
 
     X_test = df_TEST.values
 
-    # prepare TRAIN data with terget mnemonics
-    las_dict = dict()
-    for key in las_data_DTSM.keys():
-        print(f"Loading {key}")
-        df = las_data_DTSM[key]
-
-        df = process_las().get_df_by_mnemonics(
-            df=df,
-            target_mnemonics=target_mnemonics_TRAIN,
+    # prepare TRAIN data with terget mnemonics    
+    Xy_train = process_las().get_compiled_df_from_las_dict(
+            las_data_dict=las_data_DTSM_QC,
+            target_mnemonics=target_mnemonics,
             alias_dict=alias_dict,
             strict_input_output=True,
-            drop_na=True,
-        )
-
-        if (df is not None) and len(df > 1):
-            las_dict[key] = df
-    print(
-        f"Total {len(las_dict.keys())} las files loaded and total {sum([len(i) for i in las_dict.values()])} rows of data!"
-    )
-
-    # train and predict on TEST data
-
-    # create training data dataframe
-    Xy_train = pd.concat([las_dict[k] for k in las_dict.keys()], axis=0)
-
-    X_train = Xy_train.values[:, :-1]
-    y_train = Xy_train.values[:, -1:]
+            add_DEPTH_col=True,
+            log_RT=True,
+            )
+    
+    X_train = Xy_train.iloc[:, :-1]
+    y_train = Xy_train.iloc[:, -1:]
 
     # scale train data
     scaler_x, scaler_y = RobustScaler(), RobustScaler()
@@ -127,12 +110,12 @@ def test_predict(
     else:
         sample_weight = None
 
-    sample_weight = None
     # fit the model
     if sample_weight is not None:
         model.fit(X_train, y_train, sample_weight=sample_weight)
     else:
         model.fit(X_train, y_train)
+        print("Model does not accept sample weight so sample weight was not used in training!")
 
     # scale test data and predict, and scale back prediction
     X_test = scaler_x.transform(X_test)
@@ -140,11 +123,6 @@ def test_predict(
     y_predict = pd.DataFrame(y_predict, columns=["Predicted DTSM"])
 
     y_predict.index = df_TEST.index
-    # if len(df_TEST) == len(y_predict):
-    #     y_predict.index = df_TEST.index
-    # else:
-    #     y_predict = pd.merge(df_TEST, y)
-
     print(
         f"Completed traing and predicting on TEST data in time {time.time()-time0:.2f} seconds"
     )

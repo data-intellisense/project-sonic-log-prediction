@@ -12,7 +12,7 @@ from scipy.signal import medfilt
 from sklearn.base import clone
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
-
+from sklearn.base import BaseEstimator, RegressorMixin
 
 # given a mnemonic, find all of its alias
 def get_alias(mnemonic, alias_dict=None):
@@ -282,7 +282,7 @@ class process_las:
                     c[n] = c[n] + "_" + str(m)
         return c
 
-    def despike(self, df=None, cols=None, window_size=3):
+    def despike(self, df=None, cols=None, window_size=5):
         """
         df should be a dataframe, will despike all or selected columns
         """
@@ -302,27 +302,15 @@ class process_las:
 
         return df
 
-    def keep_valid_DTSM_only(self, df=None, alias_dict=None):
+    def keep_valid_DTSM_only(self, df=None):
         """
         return a df with rows of valid DTSM data
         """
-        assert alias_dict is not None, 'alias_dict is None, assign alias_dict!'
+        
         # deep copy of df so manipulation here won't alter original df
         df = df.copy()
 
-        # keep only column names
-        # columns_old = df.columns.copy()
-
-        # convert all alias to desired mnemonics
-        # df.columns = df.columns.map(alias_dict)
-
-        # drop all columns whose mnemonics are not recognized, i.e. NaN
-        # df = df.loc[:,df.columns.notnull()]
-        # df.columns = df.columns.fillna('to_drop')
-
-        # attach suffix number to duplicate column names
-        # df.columns = self.renumber_columns(df.columns)
-
+        
         # make sure only one 'DTSM' exist
         if list(df.columns.values).count("DTSM") > 1:
             print("More than one 'DTSM' curve exist!")
@@ -355,7 +343,7 @@ class process_las:
         return df
 
     def get_df_by_mnemonics(
-        self, df=None, target_mnemonics=None, alias_dict=None, strict_input_output=True, drop_na=True
+        self, df=None, target_mnemonics=None, alias_dict=None, strict_input_output=True, drop_na=True, log_RT=True,
     ):
         """
         useage: get a cleaned dataframe by given mnemonics,
@@ -424,6 +412,11 @@ class process_las:
 
         if drop_na:
             df_ = df_.dropna(axis=0)
+        
+        if 'RT' in df_.columns:
+            df_['RT'] = abs(df_['RT'])+1
+            if log_RT:
+                df_['RT'] = np.log(df_['RT'])
 
         if strict_input_output and (len(target_mnemonics) != len(df_.columns)):
             print(
@@ -443,6 +436,70 @@ class process_las:
             # better to drop all na in all columns
             return df_
 
+    def get_compiled_df_from_las_dict(
+        self,
+        las_data_dict=None,
+        target_mnemonics=None,
+        alias_dict=None,
+        strict_input_output=True,
+        add_DEPTH_col=True,
+        log_RT=True,
+        return_dict=False,
+        ):
+            
+        target_las_dict = dict()
+        # get the data that corresponds to terget mnemonics
+        for key in las_data_dict.keys():
+            print(f"Loading {key}")
+            df = las_data_dict[key]
+
+            df = self.despike(df, window_size=5)
+
+            df = self.get_df_by_mnemonics(
+                df=df, target_mnemonics=target_mnemonics, strict_input_output=True, alias_dict=alias_dict,
+                log_RT=log_RT
+            )
+
+            if (df is not None) and len(df > 1):
+                
+                # add 'DEPTH' as a feature and rearrange columns
+                if add_DEPTH_col:
+                    df['DEPTH']=df.index 
+                    cols = df.columns.to_list()
+                    df = df[cols[-1:]+cols[:-1]]
+
+                target_las_dict[key] = df
+        
+        print(
+            f"Total {len(target_las_dict.keys())} las files loaded and total {sum([len(i) for i in target_las_dict.values()])} rows of data!"
+        )
+
+        df_ = pd.concat([target_las_dict[k] for k in target_las_dict.keys()], axis=0)                                    
+
+        if return_dict:
+            return target_las_dict
+        else:
+            return df_
+
+
+class MeanRegressor(BaseEstimator, RegressorMixin):
+    def __init__(self):
+        return None
+
+    def fit(self, X_train=None, y_train=None):
+        # the prediction will always be the mean of y
+        assert isinstance(X_train, pd.DataFrame)
+        assert isinstance(y_train, pd.DataFrame)
+        assert len(y_train)==len(X_train)
+        assert y_train.shape[1]==1
+
+        self.y_bar_ = np.mean(y_train.values)
+        self.y = y_train
+        return self.y_bar_
+
+    def predict(self, X_test):
+        # give back the mean of y, in the same length as input X
+        return np.ones(len(X_test)) * self.y_bar_
 
 #%% Test data
 las_name_test = "001-00a60e5cc262_TGS"

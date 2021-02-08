@@ -14,11 +14,13 @@
 ## General info
 First, one null model (all predictions are the mean of DTSM) is built. Then a simple linear regression model is built as the baseline model.
 
-Then a gradient boosting model based on xgboost.XGBRegressor(XGB) is built and tested.
+Then a gradient boosting model based on xgboost.XGBRegressor(XGB) is built and tested based on 7 features.
 
-Then a neural network model(MLP) from sklearn is built and tested.
+Then a neural network model(MLP) from sklearn is built and tested based on 7 features.
 
 Then XGB and MLP models are tuned using RandomizedSearchCV from sklearn and using two different Bayesian hyperparameters tuning library.
+
+Then XGB and MLP models are built and tested based on different combination of features. This is to address the situation when las input does not include all 7 features.
 
 
 ## Baseline model

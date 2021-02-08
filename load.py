@@ -13,7 +13,8 @@ import pandas as pd
 import re
 
 from plot import plot_logs_columns
-from util import alias_dict, read_las, process_las, get_mnemonic, get_alias
+from util import read_las, process_las, get_mnemonic
+from load_pickle import alias_dict
 
 #%% create alias_dict
 
@@ -129,10 +130,10 @@ for ix, WellName, curves_to_remove, drop_las in temp.itertuples():
                 las_data_DTSM[WellName].columns.difference(curves_to_remove)
             ]
             remaining_mnemonics = [
-                get_mnemonic(i) for i in las_data_DTSM_QC[WellName].columns
+                get_mnemonic(i, alias_dict=alias_dict) for i in las_data_DTSM_QC[WellName].columns
             ]
             for i in curves_to_remove:
-                if (get_mnemonic(i) not in remaining_mnemonics) and (i != "AHFCO60"):
+                if (get_mnemonic(i, alias_dict=alias_dict) not in remaining_mnemonics) and (i != "AHFCO60"):
                     print(
                         f"\tRemoving {i} from data, while {remaining_mnemonics} does not have !"
                     )
@@ -176,7 +177,7 @@ target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
 
 test_list=[]
 for WellName, df in las_data_DTSM_QC.items():
-    if process_las().get_df_by_mnemonics(df=df, target_mnemonics=target_mnemonics) is not None:
+    if process_las().get_df_by_mnemonics(df=df, target_mnemonics=target_mnemonics, alias_dict=alias_dict) is not None:
         test_list.append(WellName)
     print(df.columns)
 
