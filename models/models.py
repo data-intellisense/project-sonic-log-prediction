@@ -23,9 +23,9 @@ estimators = [
 
 # neural network model
 params_mlp_7 = {'learning_rate_init': 0.01, 'hidden_layer_sizes': (100,), 'alpha': 0.001}
-model_mlp_7 = {'MLP_7':MLP(random_state=42, learning_rate='adaptive', activation='relu', max_iter=200, early_stopping=True, **params_mlp_7)}
+model_mlp_7 = MLP(random_state=42, learning_rate='adaptive', activation='relu', max_iter=200, early_stopping=True, **params_mlp_7)
 
-# using randomizedsearchcv, lowest rmse
+# using randomizedsearchcv, lowest rmse, 9.85
 # target_mnemonics = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT", "PEFZ"]
 params_xgb_7 = {'subsample': 0.7999999999999999, 'n_estimators': 250, 
             'min_child_weight': 0.31, 'max_depth': 3, 
@@ -34,7 +34,6 @@ params_xgb_7 = {'subsample': 0.7999999999999999, 'n_estimators': 250,
 model_xgb_7 = XGB(**params_xgb_7,
         tree_method="hist",
         objective="reg:squarederror")
-
 
 # using Bayesian Optimization, lowest cv rmse 10.1, loocv las rmse: 10.69 
 params_xgb_7_1 = {'lambda': 3.0378649352844422, 'learning_rate': 0.09699399423098323, 
@@ -69,48 +68,48 @@ model_xgb_2 = XGB(**params_xgb_2,
         objective="reg:squarederror")
 
 
-# # target_mnemonics_3 = ["DTCO", "NPHI", "GR"]
-# params = {
-#     "subsample": 0.9999999999999999,
-#     "n_estimators": 200,
-#     "min_child_weight": 0.23,
-#     "max_depth": 5,
-#     "learning_rate": 0.029470517025518096,
-#     "lambda": 68,
-# }
-# model_3_1 = XGB(**params)
+# target_mnemonics_3 = ["DTCO", "NPHI", "GR"]
+params_xgb_3_1 = {
+    "subsample": 0.9999999999999999,
+    "n_estimators": 200,
+    "min_child_weight": 0.23,
+    "max_depth": 5,
+    "learning_rate": 0.029470517025518096,
+    "lambda": 68,
+}
+model_xgb_3_1 = XGB(**params_xgb_3_1)
 
-# # target_mnemonics_3 = ["DTCO", "GR", "RT"]
-# params = {
-#     "subsample": 0.7999999999999999,
-#     "n_estimators": 250,
-#     "min_child_weight": 0.22,
-#     "max_depth": 5,
-#     "learning_rate": 0.03906939937054615,
-#     "lambda": 18,
-# }
-# model_3_2 = XGB(**params)
+# target_mnemonics_3 = ["DTCO", "GR", "RT"]
+params_xgb_3_2 = {
+    "subsample": 0.7999999999999999,
+    "n_estimators": 250,
+    "min_child_weight": 0.22,
+    "max_depth": 5,
+    "learning_rate": 0.03906939937054615,
+    "lambda": 18,
+}
+model_xgb_3_2 = XGB(**params_xgb_3_2)
 
-# # target_mnemonics_6 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT"]
-# params = {
-#     "subsample": 0.7999999999999999,
-#     "n_estimators": 100,
-#     "min_child_weight": 0.39,
-#     "max_depth": 5,
-#     "learning_rate": 0.0625055192527397,
-#     "lambda": 59,
-# }
-# model_6_1 = XGB(**params)
+# target_mnemonics_6 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT"]
+params_xgb_6_1 = {
+    "subsample": 0.7999999999999999,
+    "n_estimators": 100,
+    "min_child_weight": 0.39,
+    "max_depth": 5,
+    "learning_rate": 0.0625055192527397,
+    "lambda": 59,
+}
+model_xgb_6_1 = XGB(**params_xgb_6_1)
 
-# #% top part with 6 features
-# target_mnemonics_6 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "PEFZ"]
+#% top part with 6 features
+target_mnemonics_6 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "PEFZ"]
 
-# params = {
-#     "subsample": 0.7,
-#     "n_estimators": 200,
-#     "min_child_weight": 0.03,
-#     "max_depth": 4,
-#     "learning_rate": 0.03556480306223128,
-#     "lambda": 36,
-# }
-# model_6_2 = XGB(**params)
+params_xgb_6_2 = {
+    "subsample": 0.7,
+    "n_estimators": 200,
+    "min_child_weight": 0.03,
+    "max_depth": 4,
+    "learning_rate": 0.03556480306223128,
+    "lambda": 36,
+}
+model_xgb_6_2 = XGB(**params_xgb_6_2)

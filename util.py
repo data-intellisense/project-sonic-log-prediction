@@ -456,7 +456,9 @@ class process_las:
             df = self.despike(df, window_size=5)
 
             df = self.get_df_by_mnemonics(
-                df=df, target_mnemonics=target_mnemonics, strict_input_output=True, alias_dict=alias_dict,
+                df=df, target_mnemonics=target_mnemonics, 
+                strict_input_output=True, 
+                alias_dict=alias_dict,
                 log_RT=log_RT
             )
 

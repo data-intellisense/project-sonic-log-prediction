@@ -24,7 +24,7 @@ from plot import plot_crossplot, plot_logs_columns
 from load_pickle import las_data_DTSM_QC, las_lat_lon, lat_lon_TEST, alias_dict, las_data_TEST
 
 # models for prediction
-from models.models import model_7, model_3_1, model_3_2, model_6_1, model_6_2
+from models.models import model_xgb_7, model_xgb_3_1, model_xgb_3_2, model_xgb_6_1, model_xgb_6_2
 
 # load customized functions and requried dataset
 from util import (
@@ -80,15 +80,18 @@ def test_predict(
     X_test = df_TEST.values
 
     # prepare TRAIN data with terget mnemonics    
-    Xy_train = process_las().get_compiled_df_from_las_dict(
+    las_dict = process_las().get_compiled_df_from_las_dict(
             las_data_dict=las_data_DTSM_QC,
             target_mnemonics=target_mnemonics,
             alias_dict=alias_dict,
             strict_input_output=True,
             add_DEPTH_col=True,
             log_RT=True,
+            return_dict=True
             )
     
+    Xy_train = pd.concat([las_dict[k] for k in las_dict.keys()], axis=0) 
+
     X_train = Xy_train.iloc[:, :-1]
     y_train = Xy_train.iloc[:, -1:]
 
@@ -137,12 +140,13 @@ TEST_folder = "TEST"
 
 Group1 = [
     "002-Well_02",
-    # "003-Well_03",
-    # "007-Well_07",
-    # "008-Well_08",
-    # "009-Well_09",
+    "003-Well_03",
+    "007-Well_07",
+    "008-Well_08",
+    "009-Well_09",
 ]
 
+# may need to retrain model with logRT
 
 #%  choose 7 features/predictors (not including 'DTSM')
 target_mnemonics = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT", "PEFZ"]
@@ -153,13 +157,12 @@ for WellName in Group1:
 
     y_predict = test_predict(
         target_mnemonics=target_mnemonics,
-        model=model_7,
+        model=model_xgb_7,
         df_TEST=df_TEST,
         las_data_DTSM=las_data_DTSM_QC,
         lat_lon_TEST=lat_lon_TEST[WellName],
         las_lat_lon=las_lat_lon,
         sample_weight_type=2,
-        despike=True,
         TEST_folder="TEST",
     )
   
@@ -187,7 +190,6 @@ y_predict = test_predict(
     lat_lon_TEST=None,
     las_lat_lon=None,
     sample_weight_type=2,
-    despike=True,
     TEST_folder="TEST",
 )
 
@@ -207,7 +209,6 @@ y_predict = test_predict(
     lat_lon_TEST=None,
     las_lat_lon=None,
     sample_weight_type=2,
-    despike=True,
     TEST_folder="TEST",
 )
 
@@ -234,7 +235,6 @@ y_predict = test_predict(
     lat_lon_TEST=None,
     las_lat_lon=None,
     sample_weight_type=2,
-    despike=True,
     TEST_folder="TEST",
 )
 
@@ -258,7 +258,6 @@ y_predict = test_predict(
     lat_lon_TEST=None,
     las_lat_lon=None,
     sample_weight_type=2,
-    despike=True,
     TEST_folder="TEST",
 )
 
@@ -282,7 +281,6 @@ y_predict = test_predict(
     lat_lon_TEST=None,
     las_lat_lon=None,
     sample_weight_type=2,
-    despike=True,
     TEST_folder="TEST",
 )
 
@@ -311,7 +309,6 @@ y_predict = test_predict(
     lat_lon_TEST=None,
     las_lat_lon=None,
     sample_weight_type=2,
-    despike=True,
     TEST_folder="TEST",
 )
 
@@ -332,7 +329,6 @@ y_predict = test_predict(
     lat_lon_TEST=None,
     las_lat_lon=None,
     sample_weight_type=2,
-    despike=True,
     TEST_folder="TEST",
 )
 

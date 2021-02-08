@@ -209,3 +209,22 @@ def evaluate(las):
 las_path = r"data/las/00a60e5cc262_TGS.las"
 print(f"The rmse of your DTSM predictions for {las_path} is:", evaluate(las_path))
 
+
+#%% 
+import numpy as np 
+a = np.array([[1, 2],
+       [2, 3],
+       [3, 4]])
+
+a0=a[:,0:1]
+a1=a[:,1:2]
+w=[0.9,0.1]
+a2=a0*w[0]+a1*w[1]
+
+#%% 
+
+from load_pickle import las_data_TEST
+
+for key, val in las_data_TEST.items():
+
+    val.to_csv(f"data/leaderboard_1/{key}_index.csv")
