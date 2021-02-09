@@ -56,7 +56,7 @@ for f in glob.glob("data/las/*.las"):
 
     # save all data
     las_data[f_name] = df.copy()
-
+    
     # save only DTSM valid data
     if "DTSM" in df.columns.map(alias_dict):
         # save only DTSM valid data
@@ -66,8 +66,9 @@ for f in glob.glob("data/las/*.las"):
         print(f"{f_name}.las has no DTSM!")
         list_no_DTSM.append(f_name)
 
-    # save lat-lon
+    # save lat-lon and depth info
     las_lat_lon[f_name] = las.get_lat_lon()
+    
 
     count_ += 1
 
@@ -94,6 +95,7 @@ with open("data/las_data_DTSM.pickle", "wb") as f:
 # write las_data_DTSM
 with open("data/las_lat_lon.pickle", "wb") as f:
     pickle.dump(las_lat_lon, f)
+
 
 print(f"\nSuccessfully loaded total {count_+1} las files!")
 print(f"Total run time: {time.time()-time_start: .2f} seconds")
@@ -183,3 +185,17 @@ for WellName, df in las_data_DTSM_QC.items():
 
 test_list = pd.DataFrame(test_list, columns=['Test LAS'])
 test_list.to_csv('data/test_list.csv')
+
+#%% write las_depth 
+with open(f"data/las_data_DTSM_QC.pickle", "rb") as f:
+        las_data_DTSM_QC = pickle.load(f)
+
+las_depth = dict()
+
+for key, df in las_data_DTSM_QC.items():
+
+    las_depth[key] = [df.index.min(), df.index.max()]
+
+# write las_depth
+with open("data/las_depth.pickle", "wb") as f:
+    pickle.dump(las_depth, f)

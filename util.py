@@ -71,6 +71,8 @@ class read_las:
 
     def get_start_stop(self, data_names=["STRT", "STOP"]):
         return self.get_welldata(data_names=data_names)
+    
+    
 
 
 #% TEST: read_las()
@@ -86,7 +88,6 @@ if __name__ == "__main__":
     print(las.get_mnemonic_unit())
     print("lat and lon:", las.get_lat_lon())
     print("start-stop depth:", las.get_start_stop())
-
 
 #%%
 def sample_weight_calc(length=1, decay=0.999):
@@ -187,6 +188,28 @@ def get_sample_weight2(
 
     return sample_weight
 
+
+def get_nearest_neighbors(
+    depth_TEST=None,
+    las_depth=None,
+    las_lat_lon=None,
+    num_of_neighbors=5,
+):
+    assert isinstance(depth_TEST, list), 'depth_TEST should be a list with [min_depth, max_depth]'
+    assert isinstance(las_depth, dict)
+    num_of_neighbors = int(num_of_neighbors)
+
+    depth_rank=[]
+    for key, val in las_depth.items():
+        depth_rank.append([key, min([abs(i-np.mean(depth_TEST)) for i in val])])
+    
+    depth_rank=pd.DataFrame(depth_rank, columns=['WellName', 'Distance'])
+
+    if num_of_neighbors==0:
+        nn=depth_rank.sort_values(by='Distance', axis=0, ascending=True).iloc[:, 0:1].values
+    else:
+        nn=depth_rank.sort_values(by='Distance', axis=0, ascending=True).iloc[:num_of_neighbors,0:1].values
+    return nn
 
 def get_sample_weight2_TEST(
     lat_lon_TEST=None,
@@ -511,6 +534,6 @@ class MeanRegressor(BaseEstimator, RegressorMixin):
 
 
 #%% Test data
-# las_name_test = "001-00a60e5cc262_TGS"
-# las_test = "data/las/00a60e5cc262_TGS.las"
-# df_test = read_las(las_test).df()
+las_name_test = "001-00a60e5cc262_TGS"
+las_test = "data/las/00a60e5cc262_TGS.las"
+df_test = read_las(las_test).df()

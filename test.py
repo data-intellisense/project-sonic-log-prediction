@@ -1,9 +1,10 @@
 #%% import lib
 import pickle
 import random
+import pandas as pd
 from plot import plot_logs_columns, plot_3DWell
 from util import get_mnemonic, read_las, process_las, las_name_test
-from load_pickle import alias_dict
+from load_pickle import alias_dict, las_data_DTSM_QC
 
 #%% plot wellbores in 3D, weighted and un-weighted
 
@@ -242,7 +243,7 @@ print(f"The rmse of your DTSM predictions for {las_path} is:", evaluate(las_path
 
 #%%
 import numpy as np
-
+import pandas as pd
 a = np.array([[1, 2], [2, 3], [3, 4]])
 
 a0 = a[:, 0:1]
@@ -251,11 +252,33 @@ w = [0.9, 0.1]
 a2 = a0 * w[0] + a1 * w[1]
 
 np.mean(a0, axis=1)
+a=pd.DataFrame(a)
+a.diff(periods=1)
 
 #%%
 
-from load_pickle import las_data_TEST
+from load_pickle import las_data_TEST, las_depth, las_lat_lon
 
 for key, val in las_data_TEST.items():
 
     val.to_csv(f"data/leaderboard_1/{key}_index.csv")
+
+#%% test get_nearest_neighbors
+# from util import get_nearest_neighbors
+import numpy as np
+import pandas as pd
+from plot import plot_wells_3D
+from util import get_nearest_neighbors
+
+t='214-e8681aef711d_TGS'
+t='032-1f901b2ab8a5_TGS'
+t='070-5453b3a29db6_TGS'
+a = las_depth[t]
+las_lat_lon[t]
+get_nearest_neighbors(depth_TEST=las_depth[t], las_depth=las_depth, las_lat_lon=las_lat_lon, num_of_neighbors=10)
+
+val=a
+pd.DataFrame(val, columns=["Depth"])
+
+plot_wells_3D(las_name_test=t, las_depth=las_depth, las_lat_lon=las_lat_lon, num_of_neighbors=50,
+    plot_save_path='misc', plot_save_format=['html'])

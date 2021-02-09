@@ -17,6 +17,7 @@ from util import (
     get_sample_weight,
     get_sample_weight2,
     get_distance_weight,
+    get_nearest_neighbors
 )
 
 from load_pickle import las_data_DTSM_QC, las_lat_lon, alias_dict
@@ -24,6 +25,168 @@ from load_pickle import las_data_DTSM_QC, las_lat_lon, alias_dict
 pio.renderers.default = "browser"
 
 #%% 3D plot of wels
+
+def plot_wells_3D(las_name_test=None, 
+    las_depth=None, 
+    las_lat_lon=None, 
+    num_of_neighbors=5,
+    plot_show=True,
+    plot_return=False,
+    plot_save_file_name=None,
+    plot_save_path=None,
+    plot_save_format=None):
+
+    assert isinstance(las_name_test, str)
+    assert isinstance(las_depth, dict)
+    assert all([las_name_test in las_depth.keys()])
+
+    title = f"Wellbore Visualization | Test well shown as the center well | {num_of_neighbors} neighbor wells shown"
+
+    fig = go.Figure()
+
+    neighbors = get_nearest_neighbors(depth_TEST=las_depth[las_name_test],  las_depth=las_depth, 
+        las_lat_lon=las_lat_lon, num_of_neighbors=num_of_neighbors)
+
+    # add line connections from all wells to test well
+    connect_dict = dict()
+    connect_dict[las_name_test] = pd.DataFrame(
+        [np.mean(las_depth[las_name_test])], columns=["Depth"]
+    )
+    connect_dict[las_name_test][["Lat", "Lon"]] = las_lat_lon[las_name_test]
+    connect_dict[las_name_test]["Las_Name"] = las_name_test
+
+    # create data for each wellbore and plot it
+    depth_dict = dict()
+    for key, val in las_depth.items():
+
+        depth_dict[key] = pd.DataFrame(val, columns=["Depth"])
+        depth_dict[key][["Lat", "Lon"]] = las_lat_lon[key]
+        depth_dict[key]["Las_Name"] = key
+
+        if key != las_name_test:
+            connect_dict[key] = pd.concat(
+                [
+                    connect_dict[las_name_test],
+                    depth_dict[key],
+                    connect_dict[las_name_test],
+                ],
+                axis=0,
+            )
+
+        if key in neighbors:
+            fig.add_traces(
+                go.Scatter3d(
+                    x=depth_dict[key]["Lat"],
+                    y=depth_dict[key]["Lon"],
+                    z=depth_dict[key]["Depth"],
+                    showlegend=False,
+                    name=key,
+                    mode="lines",
+                    line=dict(width=15),
+                    # hoverinfo='skip',
+                    hovertemplate="<br><b>Depth<b>: %{z:.0f}",
+                )
+            )
+        else:
+            fig.add_traces(
+                go.Scatter3d(
+                    x=depth_dict[key]["Lat"],
+                    y=depth_dict[key]["Lon"],
+                    z=depth_dict[key]["Depth"],
+                    showlegend=False,
+                    name=key,
+                    mode="lines",
+                    line=dict(width=1),
+                    # hoverinfo='skip',
+                    hovertemplate="<br><b>Depth<b>: %{z:.0f}",
+                )
+            )
+
+        fig.add_traces(
+            go.Scatter3d(
+                x=connect_dict[key]["Lat"],
+                y=connect_dict[key]["Lon"],
+                z=connect_dict[key]["Depth"],
+                showlegend=False,
+                mode="lines",
+                line=dict(width=0.1),
+                hoverinfo="skip",
+            )
+        )
+
+    fig.update_layout(
+        scene_camera=dict(eye=dict(x=2, y=0, z=0.0)),
+        template="plotly_dark",
+        height=1300,
+        paper_bgcolor="#000000",
+        plot_bgcolor="#000000",
+        title=dict(
+            text=title, x=0.5, xanchor="center", font=dict(color="Lime", size=20)
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=0.06,
+            xanchor="center",
+            x=0.5,
+        ),
+    )
+
+    fig.update_scenes(
+        xaxis=dict(
+            title="",
+            showgrid=False,
+            showline=False,
+            showbackground=False,
+            showticklabels=False,
+            # range=[ ]
+        ),
+        yaxis=dict(
+            title="",
+            showgrid=False,
+            showline=False,
+            showbackground=False,
+            showticklabels=False,
+            # range = [ ]
+        ),
+        zaxis=dict(
+            title="",
+            showgrid=False,
+            showline=False,
+            showbackground=False,
+            showticklabels=False,
+            range=(25000, 0),
+        ),
+    ),
+
+    # show and save plot
+    if plot_show:
+        fig.show()
+
+    # save the figure if plot_save_format is provided
+    if plot_save_format is not None:
+
+        if plot_save_file_name is None:
+            plot_save_file_name = f"wellbore_3D_{num_of_neighbors}_neighbors"
+
+        if plot_save_path is not None:
+            plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
+            # print(f"\nPlots are saved at path: {plot_save_path}!")
+        else:
+            pass
+            # print(f"\nPlots are saved at the same path as current script!")
+
+        for fmt in plot_save_format:
+
+            plot_file_name_ = f"{plot_save_file_name}.{fmt}"
+
+            if fmt in ["png"]:
+                fig.write_image(plot_file_name_)
+            if fmt in ["html"]:
+                fig.write_html(plot_file_name_)
+
+    if plot_return:
+        return fig
 
 
 def plot_3DWell(las_name_test=None, las_data_DTSM=None, display_weight=True):

@@ -60,26 +60,39 @@ target_mnemonics_3_1 = ["DTCO", "NPHI", "RT"]
 TEST_folder_2 = "3features_LOOCV_las"
 target_mnemonics_2 = ["DTCO", "NPHI"]
 
-TEST_folder = TEST_folder_2
-target_mnemonics = target_mnemonics_2
+TEST_folder = TEST_folder_7
+target_mnemonics = target_mnemonics_7
 
 if not os.path.exists(f"predictions/{TEST_folder}"):
     os.mkdir(f"predictions/{TEST_folder}")
 
 target_mnemonics = target_mnemonics + ["DTSM"]  # 'DTSM' is a response variable
 
-Xy = process_las().get_compiled_df_from_las_dict(
+las_dict = process_las().get_compiled_df_from_las_dict(
         las_data_dict=las_data_DTSM_QC,
         target_mnemonics=target_mnemonics,
         alias_dict=alias_dict,
         strict_input_output=True,
         add_DEPTH_col=False,
+        return_dict=True,
         )
  
+Xy = pd.concat([las_dict[k] for k in las_dict.keys()], axis=0)
 X_train = Xy.iloc[:, :-1]
 y_train = Xy.iloc[:, -1:]
 
-dtrain = xgboost.DMatrix(data=X_train, label=y_train)
+
+# las_dict_diff = []
+# for k in las_dict.keys():    
+#     temp = las_dict[k].diff(periods=1, axis=0)
+#     temp.iloc[0, :] = temp.iloc[1, :]
+#     las_dict_diff.append(temp)
+
+# Xy = pd.concat(las_dict_diff, axis=0, ignore_index=True)
+# X_train = Xy.values[:, :-1]
+# y_train = Xy.values[:, -1:]
+
+# dtrain = xgboost.DMatrix(data=X_train, label=y_train)
 
 
 #%% Baseline model, y_mean and linear regression 
@@ -109,14 +122,11 @@ print(cv_results.iloc[-1,-2])
 print(f'finished in {time.time()-time0: .2f} s')
 
 
-#%% 2 features for mesh3d plot
-import plotly.graph_objects as go 
-
 #%% XGB RandomizedSearchCV tuning
 
 param_distributions = {
     "n_estimators": range(100, 300, 50),
-    "max_depth": range(3, 12),
+    "max_depth": range(1, 9),
     "min_child_weight": np.arange(0.01, 0.4, 0.01),
     "learning_rate": np.logspace(-3, -1),
     "subsample": np.arange(0.7, 1.0, 0.1),
@@ -127,7 +137,7 @@ param_distributions = {
 RandCV = RandomizedSearchCV(
     estimator=XGB(tree_method="hist", objective="reg:squarederror"),
     param_distributions=param_distributions,
-    n_iter=10,
+    n_iter=30,
     scoring="neg_mean_squared_error",
     cv=5,
     verbose=2,

@@ -17,6 +17,16 @@ except:
     print(" No 'las_lat_lon.pickle' loaded as it is NOT available!")
     las_lat_lon = None
 
+
+# get las_lat_lon
+try:
+    with open(f"data/las_depth.pickle", "rb") as f:
+        las_depth = pickle.load(f)
+except:
+    print(" No 'las_depth.pickle' loaded as it is NOT available!")
+    las_depth = None
+
+
 try:
     with open(f"data/leaderboard_1/las_lat_lon.pickle", "rb") as f:
         lat_lon_TEST = pickle.load(f)
@@ -31,6 +41,7 @@ try:
 except:
     print(" No 'alias_dict.pickle' loaded as it is NOT available!")
     alias_dict = None
+
 
 try:
     with open(f"data/leaderboard_1/las_data_TEST.pickle", "rb") as f:

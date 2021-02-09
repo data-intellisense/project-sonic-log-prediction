@@ -27,11 +27,21 @@ model_mlp_7 = MLP(random_state=42, learning_rate='adaptive', activation='relu', 
 
 # using randomizedsearchcv, lowest rmse, 9.85
 # target_mnemonics = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT", "PEFZ"]
-params_xgb_7 = {'subsample': 0.7999999999999999, 'n_estimators': 250, 
-            'min_child_weight': 0.31, 'max_depth': 3, 
-            'learning_rate': 0.022229964825261943, 'lambda': 96}
+# params_xgb_7 = {'subsample': 0.7999999999999999, 'n_estimators': 250, 
+#             'min_child_weight': 0.31, 'max_depth': 3, 
+#             'learning_rate': 0.022229964825261943, 'lambda': 96}
+
+params_xgb_7 = {'subsample': 0.7999999999999999, 'n_estimators': 150, 
+    'min_child_weight': 0.08, 'max_depth': 2, 'learning_rate': 0.06866488450042998, 'lambda': 72}
 
 model_xgb_7 = XGB(**params_xgb_7,
+        tree_method="hist",
+        objective="reg:squarederror")
+
+
+params_xgb_d7 = {'subsample': 0.9999999999999999, 'n_estimators': 150, 'min_child_weight': 0.38, 
+    'max_depth': 4, 'learning_rate': 0.06866488450042998, 'lambda': 97}
+model_xgb_d7 = XGB(**params_xgb_d7,
         tree_method="hist",
         objective="reg:squarederror")
 
