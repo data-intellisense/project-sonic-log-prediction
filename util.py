@@ -16,7 +16,7 @@ from sklearn.base import BaseEstimator, RegressorMixin
 
 # given a mnemonic, find all of its alias
 def get_alias(mnemonic, alias_dict=None):
-    assert alias_dict is not None, 'alias_dict is None, assign alias_dict!'
+    assert alias_dict is not None, "alias_dict is None, assign alias_dict!"
     alias_dict = alias_dict or {}
     return [k for k, v in alias_dict.items() if mnemonic in v]
 
@@ -24,7 +24,7 @@ def get_alias(mnemonic, alias_dict=None):
 # given a alias, find its corresponding one and only mnemonic
 # return a mnemonis if found, or else ''
 def get_mnemonic(alias=None, alias_dict=None):
-    assert alias_dict is not None, 'alias_dict is None, assign alias_dict!'
+    assert alias_dict is not None, "alias_dict is None, assign alias_dict!"
     alias_dict = alias_dict or {}
     try:
         return [v for k, v in alias_dict.items() if alias == k][0]
@@ -306,11 +306,10 @@ class process_las:
         """
         return a df with rows of valid DTSM data
         """
-        
+
         # deep copy of df so manipulation here won't alter original df
         df = df.copy()
 
-        
         # make sure only one 'DTSM' exist
         if list(df.columns.values).count("DTSM") > 1:
             print("More than one 'DTSM' curve exist!")
@@ -332,7 +331,7 @@ class process_las:
         return a df with selected mnemonics/alias
         """
 
-        assert alias_dict is not None, 'alias_dict is None, assign alias_dict!'
+        assert alias_dict is not None, "alias_dict is None, assign alias_dict!"
 
         # deep copy of df so manipulation here won't alter original df
         df = df.copy()
@@ -343,7 +342,13 @@ class process_las:
         return df
 
     def get_df_by_mnemonics(
-        self, df=None, target_mnemonics=None, alias_dict=None, strict_input_output=True, drop_na=True, log_RT=True,
+        self,
+        df=None,
+        target_mnemonics=None,
+        alias_dict=None,
+        strict_input_output=True,
+        drop_na=True,
+        log_RT=True,
     ):
         """
         useage: get a cleaned dataframe by given mnemonics,
@@ -351,7 +356,7 @@ class process_las:
         strict_input_output: if true, only output a df only if all target mnemonics are found in las, output None otherwise
             if false, will output a df with all possible mnemonis found in las
         """
-        assert alias_dict is not None, 'alias_dict is None, assign alias_dict!'
+        assert alias_dict is not None, "alias_dict is None, assign alias_dict!"
         df = df.copy()
         # check required parameters
         if target_mnemonics is None:
@@ -412,11 +417,11 @@ class process_las:
 
         if drop_na:
             df_ = df_.dropna(axis=0)
-        
-        if 'RT' in df_.columns:
-            df_['RT'] = abs(df_['RT'])+1
+
+        if "RT" in df_.columns:
+            df_["RT"] = abs(df_["RT"]) + 1
             if log_RT:
-                df_['RT'] = np.log(df_['RT'])
+                df_["RT"] = np.log(df_["RT"])
 
         if strict_input_output and (len(target_mnemonics) != len(df_.columns)):
             print(
@@ -445,8 +450,8 @@ class process_las:
         add_DEPTH_col=True,
         log_RT=True,
         return_dict=False,
-        ):
-            
+    ):
+
         target_las_dict = dict()
         # get the data that corresponds to terget mnemonics
         for key in las_data_dict.keys():
@@ -456,27 +461,28 @@ class process_las:
             df = self.despike(df, window_size=5)
 
             df = self.get_df_by_mnemonics(
-                df=df, target_mnemonics=target_mnemonics, 
-                strict_input_output=True, 
+                df=df,
+                target_mnemonics=target_mnemonics,
+                strict_input_output=True,
                 alias_dict=alias_dict,
-                log_RT=log_RT
+                log_RT=log_RT,
             )
 
             if (df is not None) and len(df > 1):
-                
+
                 # add 'DEPTH' as a feature and rearrange columns
                 if add_DEPTH_col:
-                    df['DEPTH']=df.index 
+                    df["DEPTH"] = df.index
                     cols = df.columns.to_list()
-                    df = df[cols[-1:]+cols[:-1]]
+                    df = df[cols[-1:] + cols[:-1]]
 
                 target_las_dict[key] = df
-        
+
         print(
             f"Total {len(target_las_dict.keys())} las files loaded and total {sum([len(i) for i in target_las_dict.values()])} rows of data!"
         )
 
-        df_ = pd.concat([target_las_dict[k] for k in target_las_dict.keys()], axis=0)                                    
+        df_ = pd.concat([target_las_dict[k] for k in target_las_dict.keys()], axis=0)
 
         if return_dict:
             return target_las_dict
@@ -492,8 +498,8 @@ class MeanRegressor(BaseEstimator, RegressorMixin):
         # the prediction will always be the mean of y
         assert isinstance(X_train, pd.DataFrame)
         assert isinstance(y_train, pd.DataFrame)
-        assert len(y_train)==len(X_train)
-        assert y_train.shape[1]==1
+        assert len(y_train) == len(X_train)
+        assert y_train.shape[1] == 1
 
         self.y_bar_ = np.mean(y_train.values)
         self.y = y_train
@@ -503,7 +509,8 @@ class MeanRegressor(BaseEstimator, RegressorMixin):
         # give back the mean of y, in the same length as input X
         return np.ones(len(X_test)) * self.y_bar_
 
+
 #%% Test data
-las_name_test = "001-00a60e5cc262_TGS"
-las_test = "data/las/00a60e5cc262_TGS.las"
-df_test = read_las(las_test).df()
+# las_name_test = "001-00a60e5cc262_TGS"
+# las_test = "data/las/00a60e5cc262_TGS.las"
+# df_test = read_las(las_test).df()

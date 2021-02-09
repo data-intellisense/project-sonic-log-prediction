@@ -7,8 +7,12 @@ from load_pickle import alias_dict
 
 #%% plot wellbores in 3D, weighted and un-weighted
 
-plot_3DWell(las_name_test=las_name_test, las_data_DTSM=las_data_DTSM, display_weight=True)
-plot_3DWell(las_name_test=las_name_test, las_data_DTSM=las_data_DTSM, display_weight=False)
+plot_3DWell(
+    las_name_test=las_name_test, las_data_DTSM=las_data_DTSM, display_weight=True
+)
+plot_3DWell(
+    las_name_test=las_name_test, las_data_DTSM=las_data_DTSM, display_weight=False
+)
 
 #%% -----------------------------------------------------------------------------------------
 # plot all las and save the plots
@@ -16,31 +20,32 @@ plot_3DWell(las_name_test=las_name_test, las_data_DTSM=las_data_DTSM, display_we
 # plot some random las for testing
 key = random.choice(list(las_data_DTSM.keys()))
 
-plot_logs_columns(las_data_DTSM[key], 
-                    well_name=key,
-                    plot_show=True)                        
+plot_logs_columns(las_data_DTSM[key], well_name=key, plot_show=True)
 
 # plot all las
 for key in las_data_DTSM.keys():
-    plot_logs_columns(las_data_DTSM[key], 
-                    well_name=key,
-                    plot_show=False,
-                    plot_return=False,
-                    plot_save_file_name=key,
-                    plot_save_path='plots',
-                    plot_save_format=['png', 'html'])
-       
+    plot_logs_columns(
+        las_data_DTSM[key],
+        well_name=key,
+        plot_show=False,
+        plot_return=False,
+        plot_save_file_name=key,
+        plot_save_path="plots",
+        plot_save_format=["png", "html"],
+    )
+
 #%% -----------------------------------------------------------------------------------------
 # TEST: despike
 
 # las = "data/las/0052442d0162_TGS.las"
-las = 'data/las/0a65a72dd23f_TGS.las'
+las = "data/las/0a65a72dd23f_TGS.las"
 df = read_las(las).df()
 
 plot_logs_columns(df)
 
 from scipy.signal import medfilt
-medfilt(df['DTCO'].values, kernel_size=3)
+
+medfilt(df["DTCO"].values, kernel_size=3)
 
 df = process_las().despike(df)
 plot_logs_columns(df)
@@ -50,52 +55,78 @@ plot_logs_columns(df)
 
 import pandas as pd
 import numpy as np
-import seaborn 
+import seaborn
 
 import plotly.express as px
 import plotly.io as pio
-import plotly.graph_objects as go 
+import plotly.graph_objects as go
 
-pio.renderers.default = 'browser'
+pio.renderers.default = "browser"
 
 # import cordinates
-cords = pd.read_csv('data/cords.csv', index_col=0)
+cords = pd.read_csv("data/cords.csv", index_col=0)
 
 print(cords.sample(5))
 
 fig = go.Figure()
-fig.add_traces(go.Scatter(x=cords['Lon'], y=cords['Lat'], mode='markers', marker=dict(size=cords['STOP']/500),
-                    hoverinfo='text', hovertext = cords['Well']))
-fig.update_layout(xaxis = dict(title='Longitude'),
-                    yaxis = dict(title='Latitude'),
-                    title = dict(text='Size: Stop Depth'),
-                    font=dict(size=18))
-
+fig.add_traces(
+    go.Scatter(
+        x=cords["Lon"],
+        y=cords["Lat"],
+        mode="markers",
+        marker=dict(size=cords["STOP"] / 500),
+        hoverinfo="text",
+        hovertext=cords["Well"],
+    )
+)
+fig.update_layout(
+    xaxis=dict(title="Longitude"),
+    yaxis=dict(title="Latitude"),
+    title=dict(text="Size: Stop Depth"),
+    font=dict(size=18),
+)
 
 
 #%% -----------------------------------------------------------------------------------------
 # TEST: mnemonics mapping
 las_path = r"data/las/00a60e5cc262_TGS.las"
 df = lasio.read(las_path).df()
-print('before mnemonics conversion:', df.columns)
+print("before mnemonics conversion:", df.columns)
 
 # convert different mnemonics to consistent mnemonic
 df.columns = df.columns.map(alias_dict)
-print('after mnemonics conversion:', df.columns)
+print("after mnemonics conversion:", df.columns)
 
 
 #%% -----------------------------------------------------------------------------------------
 # TEST get_df_by_mnemonics
-   
+
 las = "data/las/0052442d0162_TGS.las"
 df = read_las(las).df()
 
-print('original df:', df.head(5))
-print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['DTCO', 'GR', 'DTSM'], strict_input_output=False))
+print("original df:", df.head(5))
+print(
+    "\nnew df:",
+    process_las().get_df_by_mnemonics(
+        df=df, target_mnemonics=["DTCO", "GR", "DTSM"], strict_input_output=False
+    ),
+)
 
-print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['DTCO', 'GR', 'DPHI', 'DTSM'], strict_input_output=False))
+print(
+    "\nnew df:",
+    process_las().get_df_by_mnemonics(
+        df=df,
+        target_mnemonics=["DTCO", "GR", "DPHI", "DTSM"],
+        strict_input_output=False,
+    ),
+)
 
-print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['DTCO', 'GR', 'DPHI', 'DTSM'], strict_input_output=True))
+print(
+    "\nnew df:",
+    process_las().get_df_by_mnemonics(
+        df=df, target_mnemonics=["DTCO", "GR", "DPHI", "DTSM"], strict_input_output=True
+    ),
+)
 
 
 #%% -----------------------------------------------------------------------------------------
@@ -106,7 +137,6 @@ print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['D
 # viewer_sample = ptr.LogViewer(log,top = 6950, height = 100)
 
 
-
 #%% -----------------------------------------------------------------------------------------
 #  TEST 1: split train/test within rows of data
 
@@ -115,7 +145,7 @@ print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['D
 #     las_data_DTSM = pickle.load(f)
 
 # # 7 features
-# target_mnemonics = ['DTCO', 'NPHI','RHOB', 'GR', 'CALI', 'RT', 'PEFZ', 'DTSM']        
+# target_mnemonics = ['DTCO', 'NPHI','RHOB', 'GR', 'CALI', 'RT', 'PEFZ', 'DTSM']
 # df = None
 # key_list = []
 # for key in las_data_DTSM.keys():
@@ -140,7 +170,7 @@ print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['D
 # print('Data X and y shape:', X.shape, y.shape)
 
 # models = {
-#         'RCV': RCV(), 
+#         'RCV': RCV(),
 #         'LSVR': LSVR(epsilon=0.1),
 #         'KNN': KNN(n_neighbors=10),
 #         'GBR': GBR(),
@@ -150,7 +180,7 @@ print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['D
 
 # for name, model in models.items():
 #     time0 = time.time()
-#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)    
+#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 #     scaler_x, scaler_y = RobustScaler(), RobustScaler()
 #     X_train = scaler_x.fit_transform(X_train)
 #     y_train = scaler_y.fit_transform(y_train)
@@ -158,15 +188,15 @@ print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['D
 #     reg = model.fit(X_train, y_train)
 
 #     X_test = scaler_x.transform(X_test)
-#     y_predict = scaler_y.inverse_transform(reg.predict(X_test).reshape(-1,1))   
-    
+#     y_predict = scaler_y.inverse_transform(reg.predict(X_test).reshape(-1,1))
+
 #     # not the correct way, should scale train and test data seprately
 #     X_ = scaler_x.fit_transform(X)
 #     y_ = scaler_x.fit_transform(y)
 #     text = f'{name} - rmse_cv: {CV_weighted(reg, X_, y_):.2f}'
-    
+
 #     # plot crossplot
-#     plot_crossplot(y_actual=y_test.values, 
+#     plot_crossplot(y_actual=y_test.values,
 #                 y_predict=y_predict,
 #                 text=text,
 #                 plot_show=True,
@@ -174,7 +204,7 @@ print('\nnew df:', process_las().get_df_by_mnemonics(df=df, target_mnemonics=['D
 #                 plot_save_file_name=f'Prediction-{name}',
 #                 plot_save_path='predictions/7features',
 #                 plot_save_format=['png'])
-   
+
 #     print(f'Finished fitting with {name} model in {time.time()-time0:.2f} seconds')
 
 #%% for evaluate models based on rmse
@@ -210,18 +240,19 @@ las_path = r"data/las/00a60e5cc262_TGS.las"
 print(f"The rmse of your DTSM predictions for {las_path} is:", evaluate(las_path))
 
 
-#%% 
-import numpy as np 
-a = np.array([[1, 2],
-       [2, 3],
-       [3, 4]])
+#%%
+import numpy as np
 
-a0=a[:,0:1]
-a1=a[:,1:2]
-w=[0.9,0.1]
-a2=a0*w[0]+a1*w[1]
+a = np.array([[1, 2], [2, 3], [3, 4]])
 
-#%% 
+a0 = a[:, 0:1]
+a1 = a[:, 1:2]
+w = [0.9, 0.1]
+a2 = a0 * w[0] + a1 * w[1]
+
+np.mean(a0, axis=1)
+
+#%%
 
 from load_pickle import las_data_TEST
 
