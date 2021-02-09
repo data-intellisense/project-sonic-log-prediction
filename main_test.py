@@ -21,25 +21,38 @@ from sklearn.preprocessing import RobustScaler
 
 from plot import plot_crossplot, plot_logs_columns
 
-from load_pickle import las_data_DTSM_QC, las_lat_lon, lat_lon_TEST, alias_dict, las_data_TEST
+from load_pickle import (
+    las_data_DTSM_QC,
+    las_lat_lon,
+    lat_lon_TEST,
+    alias_dict,
+    las_data_TEST,
+)
 
 # models for prediction
-from models.models import model_xgb_7, model_xgb_3_1, model_xgb_3_2, model_xgb_6_1, model_xgb_6_2
+from models.models import (
+    model_xgb_7,
+    model_xgb_3_1,
+    model_xgb_3_2,
+    model_xgb_6_1,
+    model_xgb_6_2,
+)
 
 # load customized functions and requried dataset
 from util import (
     get_alias,
     get_mnemonic,
     get_sample_weight,
-    get_sample_weight2,    
+    get_sample_weight2,
     process_las,
-    get_sample_weight2_TEST
+    get_sample_weight2_TEST,
 )
 
 pio.renderers.default = "browser"
 
 
 #%%  TEST 2: split train/test among las files (recommended)
+
 
 def test_predict(
     target_mnemonics=None,
@@ -66,11 +79,13 @@ def test_predict(
 
     df_TEST = process_las().despike(df_TEST, window_size=5)
 
+    print("df_TEST", df_TEST)
     df_TEST = process_las().get_df_by_mnemonics(
         df=df_TEST,
         target_mnemonics=target_mnemonics_TEST,
         strict_input_output=True,
         alias_dict=alias_dict,
+        add_DEPTH_col=True,
         drop_na=False,
     )
 
@@ -79,18 +94,18 @@ def test_predict(
 
     X_test = df_TEST.values
 
-    # prepare TRAIN data with terget mnemonics    
+    # prepare TRAIN data with terget mnemonics
     las_dict = process_las().get_compiled_df_from_las_dict(
-            las_data_dict=las_data_DTSM_QC,
-            target_mnemonics=target_mnemonics,
-            alias_dict=alias_dict,
-            strict_input_output=True,
-            add_DEPTH_col=True,
-            log_RT=True,
-            return_dict=True
-            )
-    
-    Xy_train = pd.concat([las_dict[k] for k in las_dict.keys()], axis=0) 
+        las_data_dict=las_data_DTSM_QC,
+        target_mnemonics=target_mnemonics_TRAIN,
+        alias_dict=alias_dict,
+        strict_input_output=True,
+        add_DEPTH_col=True,
+        log_RT=True,
+        return_dict=True,
+    )
+
+    Xy_train = pd.concat([las_dict[k] for k in las_dict.keys()], axis=0)
 
     X_train = Xy_train.iloc[:, :-1]
     y_train = Xy_train.iloc[:, -1:]
@@ -103,12 +118,12 @@ def test_predict(
     # get sample weight for training
     if sample_weight_type == 2:
         sample_weight = get_sample_weight2_TEST(
-                        lat_lon_TEST=lat_lon_TEST,
-                        mid_depth_TEST=df_TEST.index.values.mean(),
-                        las_dict=las_dict,
-                        vertical_anisotropy=0.01,
-                        las_lat_lon=las_lat_lon,
-                        )
+            lat_lon_TEST=lat_lon_TEST,
+            mid_depth_TEST=df_TEST.index.values.mean(),
+            las_dict=las_dict,
+            vertical_anisotropy=0.01,
+            las_lat_lon=las_lat_lon,
+        )
     # 0 or any other value will lead to no sample weight used
     else:
         sample_weight = None
@@ -118,7 +133,9 @@ def test_predict(
         model.fit(X_train, y_train, sample_weight=sample_weight)
     else:
         model.fit(X_train, y_train)
-        print("Model does not accept sample weight so sample weight was not used in training!")
+        print(
+            "Model does not accept sample weight so sample weight was not used in training!"
+        )
 
     # scale test data and predict, and scale back prediction
     X_test = scaler_x.transform(X_test)
@@ -165,7 +182,7 @@ for WellName in Group1:
         sample_weight_type=2,
         TEST_folder="TEST",
     )
-  
+
     y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}.csv")
     print("X_test and y_predict length:", len(df_TEST), len(y_predict))
     print(f"Prediction results are saved at: predictions/TEST")
@@ -178,7 +195,7 @@ WellName = "001-Well_01"
 df_TEST = las_data_TEST[WellName]
 print("Total row of data:", len(df_TEST))
 
-
+assert 1 == 2, "are you sure you get the top/btm part right?"
 df_TEST_7 = df_TEST[df_TEST.index <= 7900]
 df_TEST_7.shape
 

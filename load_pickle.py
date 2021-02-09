@@ -1,4 +1,3 @@
-
 #%% load necessary data for main.py
 import pickle
 
@@ -14,7 +13,7 @@ try:
     with open(f"data/las_lat_lon.pickle", "rb") as f:
         las_lat_lon = pickle.load(f)
 except:
-    print(" No 'las_lat_lon.pickle' loaded as it is NOT available!")
+    print(" No 'las_lat_lon.pickle' in data loaded as it is NOT available!")
     las_lat_lon = None
 
 
@@ -31,7 +30,7 @@ try:
     with open(f"data/leaderboard_1/las_lat_lon.pickle", "rb") as f:
         lat_lon_TEST = pickle.load(f)
 except:
-    print(" No 'las_lat_lon.pickle' loaded as it is NOT available!")
+    print(" No 'las_lat_lon.pickle' in leaderboard_1 loaded as it is NOT available!")
     lat_lon_TEST = None
 
 # get the alias_dict, required

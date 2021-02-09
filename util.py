@@ -54,6 +54,7 @@ class read_las:
 
     def get_curvedata(self, data_names=[]):
         df = self.df_curves()
+        return df
 
     def df_welldata(self, valid_value_only=True):
         l = []
@@ -71,8 +72,6 @@ class read_las:
 
     def get_start_stop(self, data_names=["STRT", "STOP"]):
         return self.get_welldata(data_names=data_names)
-    
-    
 
 
 #% TEST: read_las()
@@ -191,25 +190,52 @@ def get_sample_weight2(
 
 def get_nearest_neighbors(
     depth_TEST=None,
+    lat_lon_TEST=None,
     las_depth=None,
     las_lat_lon=None,
-    num_of_neighbors=5,
+    num_of_neighbors=20,
+    vertical_anisotropy=1,
+    depth_range_weight=0.1,
 ):
-    assert isinstance(depth_TEST, list), 'depth_TEST should be a list with [min_depth, max_depth]'
+    assert isinstance(
+        depth_TEST, list
+    ), "depth_TEST should be a list with [min_depth, max_depth]"
     assert isinstance(las_depth, dict)
+    assert isinstance(
+        lat_lon_TEST, list
+    ), "las_lon_TEST should be a list with lat and lon"
     num_of_neighbors = int(num_of_neighbors)
 
-    depth_rank=[]
+    depth_rank = []
     for key, val in las_depth.items():
-        depth_rank.append([key, min([abs(i-np.mean(depth_TEST)) for i in val])])
-    
-    depth_rank=pd.DataFrame(depth_rank, columns=['WellName', 'Distance'])
+        d1 = abs(np.mean(depth_TEST) - np.mean(val))
+        d2 = max(depth_TEST) - min(depth_TEST)
+        if lat_lon_TEST is not None:
+            d3 = get_distance(lat_lon_TEST, las_lat_lon[key])
+        else:
+            d3 = 0
 
-    if num_of_neighbors==0:
-        nn=depth_rank.sort_values(by='Distance', axis=0, ascending=True).iloc[:, 0:1].values
+        depth_rank.append([key, d1, d2, d3])
+
+    depth_rank = pd.DataFrame(depth_rank, columns=["WellName", "d1", "d2", "d3"])
+    for col in depth_rank.columns[1:]:
+        scaler = MinMaxScaler()
+        depth_rank[col] = scaler.fit_transform(depth_rank[[col]])
+
+    depth_rank["d"] = (
+        depth_rank["d1"] - (depth_rank["d2"] * depth_range_weight)
+    ) + depth_rank["d3"] * vertical_anisotropy
+
+    if num_of_neighbors == 0:
+        nn = depth_rank.iloc[:, 0:1].values
     else:
-        nn=depth_rank.sort_values(by='Distance', axis=0, ascending=True).iloc[:num_of_neighbors,0:1].values
+        nn = (
+            depth_rank.sort_values(by="d", axis=0, ascending=True)
+            .iloc[:num_of_neighbors, 0:1]
+            .values
+        )
     return nn
+
 
 def get_sample_weight2_TEST(
     lat_lon_TEST=None,
@@ -370,6 +396,7 @@ class process_las:
         target_mnemonics=None,
         alias_dict=None,
         strict_input_output=True,
+        add_DEPTH_col=False,
         drop_na=True,
         log_RT=True,
     ):
@@ -446,6 +473,14 @@ class process_las:
             if log_RT:
                 df_["RT"] = np.log(df_["RT"])
 
+        if add_DEPTH_col:
+            if "DEPTH" not in df_.columns:
+                df_["DEPTH"] = df_.index
+                cols = df_.columns.to_list()
+                df_ = df_[cols[-1:] + cols[:-1]]
+            else:
+                print("'DEPTH' column already existed!")
+
         if strict_input_output and (len(target_mnemonics) != len(df_.columns)):
             print(
                 f"\tNo all target mnemonics are found in df, strict_input_output rule applied, returned None!"
@@ -494,10 +529,14 @@ class process_las:
             if (df is not None) and len(df > 1):
 
                 # add 'DEPTH' as a feature and rearrange columns
+
                 if add_DEPTH_col:
-                    df["DEPTH"] = df.index
-                    cols = df.columns.to_list()
-                    df = df[cols[-1:] + cols[:-1]]
+                    if "DEPTH" not in df_.columns:
+                        df["DEPTH"] = df.index
+                        cols = df.columns.to_list()
+                        df = df[cols[-1:] + cols[:-1]]
+                    else:
+                        print("'DEPTH' column already existed!")
 
                 target_las_dict[key] = df
 
@@ -519,12 +558,15 @@ class MeanRegressor(BaseEstimator, RegressorMixin):
 
     def fit(self, X_train=None, y_train=None):
         # the prediction will always be the mean of y
-        assert isinstance(X_train, pd.DataFrame)
-        assert isinstance(y_train, pd.DataFrame)
+        # assert isinstance(X_train, pd.DataFrame) or isinstance(X_train, np.ndarray)
+        assert isinstance(y_train, pd.DataFrame) or isinstance(y_train, np.ndarray)
         assert len(y_train) == len(X_train)
         assert y_train.shape[1] == 1
 
-        self.y_bar_ = np.mean(y_train.values)
+        try:
+            self.y_bar_ = np.mean(y_train.values, axis=0)
+        except:
+            self.y_bar_ = np.mean(y_train, axis=0)
         self.y = y_train
         return self.y_bar_
 

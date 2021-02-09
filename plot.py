@@ -17,7 +17,7 @@ from util import (
     get_sample_weight,
     get_sample_weight2,
     get_distance_weight,
-    get_nearest_neighbors
+    get_nearest_neighbors,
 )
 
 from load_pickle import las_data_DTSM_QC, las_lat_lon, alias_dict
@@ -26,15 +26,20 @@ pio.renderers.default = "browser"
 
 #%% 3D plot of wels
 
-def plot_wells_3D(las_name_test=None, 
-    las_depth=None, 
-    las_lat_lon=None, 
+
+def plot_wells_3D(
+    las_name_test=None,
+    las_depth=None,
+    las_lat_lon=None,
     num_of_neighbors=5,
+    vertical_anisotropy=0.1,
+    depth_range_weight=0.1,
     plot_show=True,
     plot_return=False,
     plot_save_file_name=None,
     plot_save_path=None,
-    plot_save_format=None):
+    plot_save_format=None,
+):
 
     assert isinstance(las_name_test, str)
     assert isinstance(las_depth, dict)
@@ -44,8 +49,14 @@ def plot_wells_3D(las_name_test=None,
 
     fig = go.Figure()
 
-    neighbors = get_nearest_neighbors(depth_TEST=las_depth[las_name_test],  las_depth=las_depth, 
-        las_lat_lon=las_lat_lon, num_of_neighbors=num_of_neighbors)
+    neighbors = get_nearest_neighbors(
+        depth_TEST=las_depth[las_name_test],
+        lat_lon_TEST=las_lat_lon[las_name_test],
+        las_depth=las_depth,
+        las_lat_lon=las_lat_lon,
+        num_of_neighbors=num_of_neighbors,
+        vertical_anisotropy=vertical_anisotropy,
+    )
 
     # add line connections from all wells to test well
     connect_dict = dict()
@@ -102,6 +113,7 @@ def plot_wells_3D(las_name_test=None,
                 )
             )
 
+        # add connecting lines
         fig.add_traces(
             go.Scatter3d(
                 x=connect_dict[key]["Lat"],
@@ -114,10 +126,26 @@ def plot_wells_3D(las_name_test=None,
             )
         )
 
+    # emphasize center TEST wells
+    fig.add_traces(
+        go.Scatter3d(
+            x=depth_dict[las_name_test]["Lat"],
+            y=depth_dict[las_name_test]["Lon"],
+            z=depth_dict[las_name_test]["Depth"],
+            showlegend=False,
+            name=key,
+            mode="lines",
+            line=dict(width=30),
+            # hoverinfo='skip',
+            hovertemplate="<br><b>Depth<b>: %{z:.0f}",
+        )
+    )
+
     fig.update_layout(
         scene_camera=dict(eye=dict(x=2, y=0, z=0.0)),
         template="plotly_dark",
         height=1300,
+        width=1300,
         paper_bgcolor="#000000",
         plot_bgcolor="#000000",
         title=dict(

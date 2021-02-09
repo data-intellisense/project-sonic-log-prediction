@@ -56,7 +56,7 @@ for f in glob.glob("data/las/*.las"):
 
     # save all data
     las_data[f_name] = df.copy()
-    
+
     # save only DTSM valid data
     if "DTSM" in df.columns.map(alias_dict):
         # save only DTSM valid data
@@ -68,7 +68,6 @@ for f in glob.glob("data/las/*.las"):
 
     # save lat-lon and depth info
     las_lat_lon[f_name] = las.get_lat_lon()
-    
 
     count_ += 1
 
@@ -132,10 +131,13 @@ for ix, WellName, curves_to_remove, drop_las in temp.itertuples():
                 las_data_DTSM[WellName].columns.difference(curves_to_remove)
             ]
             remaining_mnemonics = [
-                get_mnemonic(i, alias_dict=alias_dict) for i in las_data_DTSM_QC[WellName].columns
+                get_mnemonic(i, alias_dict=alias_dict)
+                for i in las_data_DTSM_QC[WellName].columns
             ]
             for i in curves_to_remove:
-                if (get_mnemonic(i, alias_dict=alias_dict) not in remaining_mnemonics) and (i != "AHFCO60"):
+                if (
+                    get_mnemonic(i, alias_dict=alias_dict) not in remaining_mnemonics
+                ) and (i != "AHFCO60"):
                     print(
                         f"\tRemoving {i} from data, while {remaining_mnemonics} does not have !"
                     )
@@ -177,18 +179,23 @@ with open("data/las_data_DTSM_QC.pickle", "wb") as f:
 
 target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
 
-test_list=[]
+test_list = []
 for WellName, df in las_data_DTSM_QC.items():
-    if process_las().get_df_by_mnemonics(df=df, target_mnemonics=target_mnemonics, alias_dict=alias_dict) is not None:
+    if (
+        process_las().get_df_by_mnemonics(
+            df=df, target_mnemonics=target_mnemonics, alias_dict=alias_dict
+        )
+        is not None
+    ):
         test_list.append(WellName)
     print(df.columns)
 
-test_list = pd.DataFrame(test_list, columns=['Test LAS'])
-test_list.to_csv('data/test_list.csv')
+test_list = pd.DataFrame(test_list, columns=["Test LAS"])
+test_list.to_csv("data/test_list.csv")
 
-#%% write las_depth 
+#%% write las_depth
 with open(f"data/las_data_DTSM_QC.pickle", "rb") as f:
-        las_data_DTSM_QC = pickle.load(f)
+    las_data_DTSM_QC = pickle.load(f)
 
 las_depth = dict()
 
