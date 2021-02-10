@@ -11,6 +11,7 @@ import plotly.express as px
 import plotly.io as pio
 from sklearn.ensemble import GradientBoostingRegressor as GBR
 from sklearn.ensemble import StackingRegressor as Stack
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression, RidgeCV
 
 from sklearn.metrics import mean_squared_error
@@ -19,7 +20,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import RobustScaler
 from sklearn.pipeline import make_pipeline
 
-
+from pprint import pprint
 from sklearn.model_selection import ShuffleSplit
 from xgboost import XGBRegressor as XGB
 import xgboost
@@ -322,3 +323,40 @@ print(f"finished in {time.time()-time0: .2f} s")
 
 # plot partial dependence
 # https://scikit-learn.org/stable/auto_examples/inspection/plot_partial_dependence.html#sphx-glr-auto-examples-inspection-plot-partial-dependence-py
+
+#%% random forest tuning
+
+# Number of trees in random forest
+n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
+# Number of features to consider at every split
+max_features = ['auto', 'sqrt']
+# Maximum number of levels in tree
+max_depth = [int(x) for x in np.linspace(10, 110, num = 11)]
+max_depth.append(None)
+# Minimum number of samples required to split a node
+min_samples_split = [2, 5, 7, 10]
+# Minimum number of samples required at each leaf node
+min_samples_leaf = [1, 2, 4]
+# Method of selecting samples for training each tree
+bootstrap = [True, False]
+# Create the random grid
+random_grid = {'n_estimators': n_estimators,
+               'max_features': max_features,
+               'max_depth': max_depth,
+               'min_samples_split': min_samples_split,
+               'min_samples_leaf': min_samples_leaf,
+               'bootstrap': bootstrap}
+
+pprint(random_grid)
+
+# Use the random grid to search for best hyperparameters
+# First create the base model to tune
+rf = RandomForestRegressor()
+# Random search of parameters, using 3 fold cross validation, 
+# search across 100 different combinations, and use all available cores
+rf_best = RandomizedSearchCV(estimator = rf, param_distributions = random_grid,
+    n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = 1)
+
+# Fit the random search model
+rf_best.fit(X_train, y_train)
+print(rf_best.best_params_)

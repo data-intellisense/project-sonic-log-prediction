@@ -7,17 +7,6 @@ from sklearn.neighbors import KNeighborsRegressor as KNN
 from sklearn.neural_network import MLPRegressor as MLP
 from sklearn.ensemble import StackingRegressor
 
-estimators = [
-    ("MLR", MLR()),
-    ("RCV", RCV()),
-    # ('LSVR', LSVR()),
-    # ('RFR', RFR()),
-    # ('KNN', KNN()),
-    # ('MLP', MLP())
-]
-
-# model = StackingRegressor(estimators=estimators, final_estimator=LSVR())
-# models = {'stack_models': model}
 # # choose the best model with tuned hyper parameters
 
 # neural network model
@@ -62,6 +51,8 @@ params_xgb_7 = {
 }
 
 model_xgb_7 = XGB(**params_xgb_7, tree_method="hist", objective="reg:squarederror")
+
+
 
 # xgb model based the difference of 7 features, not scaled
 # params_xgb_d7 = {
@@ -174,3 +165,13 @@ params_xgb_6_2 = {
     "lambda": 36,
 }
 model_xgb_6_2 = XGB(**params_xgb_6_2)
+
+
+# stacked estimator
+estimators = [
+    ("XGB", model_xgb_7),
+    ("XGB1", model_xgb_7_1),
+
+]
+
+model_stack = StackingRegressor(estimators=estimators, final_estimator=RCV())

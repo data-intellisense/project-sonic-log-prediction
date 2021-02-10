@@ -16,8 +16,15 @@ XGB_7:   rmse= 9.856 (108 files) with sample_weight=sample_weight2, run 1055 sec
 
 So sample_weight2 DOES improve model performance by 0.1!!! This is with 'DEPTH' added as a feature.
 
-XGB_7:   rmse= 9.027 (108 files) with sample_weight=sample_weight2 but not used!!!, model tuned on differenced and scaled training data, data in LOOCV were also differenced and scaled (RobustScaler), run 890 seconds (on Transform).  Use_difference=False,
+XGB_7 (best):   rmse= 9.021 (108 files) with sample_weight=None and RobustScaler!
 
+XGB_7:   rmse= 9.874 (108 files) with sample_weight=sample_weight2. Depth already include so sample weight reduced accuracy? 
 
- <!-- (i.e. time series prediction was used. 20 neighboring wells were used to predict the seleted well. rmse=9.0249 when 30 neighbor wells were used. -->
+XGB_7:   rmse= 9.75 (108 files) with sample_weight=None and NO scaling!
+
+XGB_7: rmse = 9.87 (108 files) with log_DTSM, sample_weight=None, scaling
+
+XGB_7: rmse = 9.80 (108 files) with log_mnemonics = ['RT', 'NPHI'], scaling
+
+ Bad!! Using difference to do time series prediction. 20 neighboring wells were used to predict the seleted well. rmse was way to high.
 

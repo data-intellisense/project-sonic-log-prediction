@@ -14,6 +14,22 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
 from sklearn.base import BaseEstimator, RegressorMixin
 
+def to_pkl(data, path):
+    '''
+    'path' should be a path with file name
+    '''
+    with open(path, 'wb') as f:
+        pickle.dump(data, f)
+    return None
+
+def read_pkl(path):
+    '''
+    'path' should be a path with file name
+    '''
+    with open(path, 'rb') as f:
+        data = pickle.load(f)
+    return data
+
 # given a mnemonic, find all of its alias
 def get_alias(mnemonic, alias_dict=None):
     assert alias_dict is not None, "alias_dict is None, assign alias_dict!"
@@ -33,7 +49,6 @@ def get_mnemonic(alias=None, alias_dict=None):
 
 
 #%% read las, return curves and data etc.
-
 
 class read_las:
     def __init__(self, las):
@@ -398,7 +413,7 @@ class process_las:
         strict_input_output=True,
         add_DEPTH_col=False,
         drop_na=True,
-        log_RT=True,
+        log_mnemonics=['RT'],
     ):
         """
         useage: get a cleaned dataframe by given mnemonics,
@@ -468,10 +483,10 @@ class process_las:
         if drop_na:
             df_ = df_.dropna(axis=0)
 
-        if "RT" in df_.columns:
-            df_["RT"] = abs(df_["RT"]) + 1
-            if log_RT:
-                df_["RT"] = np.log(df_["RT"])
+        for col in log_mnemonics:
+            if col in df_.columns:
+                df_[col] = abs(df_[col]) + 1e-4
+                df_[col] = np.log(df_[col])            
 
         if add_DEPTH_col:
             if "DEPTH" not in df_.columns:
@@ -506,7 +521,7 @@ class process_las:
         alias_dict=None,
         strict_input_output=True,
         add_DEPTH_col=True,
-        log_RT=True,
+        log_mnemonics=['RT'],
         return_dict=False,
     ):
 
@@ -523,7 +538,7 @@ class process_las:
                 target_mnemonics=target_mnemonics,
                 strict_input_output=True,
                 alias_dict=alias_dict,
-                log_RT=log_RT,
+                log_mnemonics=log_mnemonics,
             )
 
             if (df is not None) and len(df > 1):
@@ -531,7 +546,7 @@ class process_las:
                 # add 'DEPTH' as a feature and rearrange columns
 
                 if add_DEPTH_col:
-                    if "DEPTH" not in df_.columns:
+                    if "DEPTH" not in df.columns:
                         df["DEPTH"] = df.index
                         cols = df.columns.to_list()
                         df = df[cols[-1:] + cols[:-1]]

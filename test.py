@@ -295,3 +295,65 @@ get_nearest_neighbors(
 #     plot_save_path="misc",
 #     plot_save_format=["png", "html"],
 # )
+
+#%% use difference
+
+# create training data dataframe
+# if use_difference:
+
+#     neighbors = get_nearest_neighbors(
+#         depth_TEST=las_depth[las_name],
+#         lat_lon_TEST=las_lat_lon[las_name],
+#         las_depth=las_depth,
+#         las_lat_lon=las_lat_lon,
+#         num_of_neighbors=30,
+#         vertical_anisotropy=1,
+#         depth_range_weight=0.1,
+#     )
+
+#     las_dict_diff = []
+
+#     for k in neighbors:
+#         k = k[0]
+#         if k not in [las_name]:
+#             print("k:", k)
+#             temp = las_dict[k].diff(periods=1, axis=0)
+#             temp.iloc[0, :] = temp.iloc[1, :]
+#             las_dict_diff.append(temp)
+
+#     Xy_train_diff = pd.concat(las_dict_diff, axis=0, ignore_index=True)
+#     X_train_diff = Xy_train_diff.values[:, :-1]
+#     y_train_diff = Xy_train_diff.values[:, -1:]
+
+#     # scale train data
+#     scaler_x_diff, scaler_y_diff = RobustScaler(), RobustScaler()
+#     X_train_diff = scaler_x_diff.fit_transform(X_train_diff)
+#     y_train_diff = scaler_y_diff.fit_transform(y_train_diff)
+
+#     print("difference training", len(sample_weight), len(X_train_diff))
+#     model_diff = list(dmodels.values())[0]
+#     try:
+#         model_diff.fit(
+#             X_train_diff, y_train_diff, sample_weight=sample_weight
+#         )
+#     except:
+#         model_diff.fit(X_train_diff, y_train_diff)
+#         print(
+#             "Model_diff does not accept sample weight so sample weight was not used in difference training!"
+#         )
+
+#     X_test_diff = Xy_test.iloc[:, :-1].diff(periods=1, axis=0)
+#     X_test_diff.iloc[0, :] = X_test_diff.iloc[1, :]
+#     X_test_diff = X_test_diff.values
+
+#     X_test_diff = scaler_x_diff.transform(X_test_diff)
+#     y_predict_diff = scaler_y_diff.inverse_transform(
+#         model_diff.predict(X_test_diff).reshape(-1, 1)
+#     )
+#     y_predict_diff = np.cumsum(y_predict_diff, axis=0)
+
+#     y_predict = (
+#         np.mean(y_predict, axis=0)
+#         - np.mean(y_predict_diff, axis=0)
+#         + y_predict_diff
+#     )
