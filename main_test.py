@@ -331,7 +331,7 @@ y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}_3features.csv")
 
 print(f"Prediction results are saved at: predictions/TEST")
 
-
+assert 1==2, 'make sure to update the test well, fix missing data and fix DTCO'
 #%% check df length
 
 for WellName in las_data_TEST.keys():
