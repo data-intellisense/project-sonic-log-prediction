@@ -71,10 +71,11 @@ def LOOCV(
     las_dict = process_las().get_compiled_df_from_las_dict(
         las_data_dict=las_data_DTSM_QC,
         target_mnemonics=target_mnemonics,
-        alias_dict=alias_dict,
-        strict_input_output=True,
-        add_DEPTH_col=True,
+        new_mnemonics=['DEPTH'],
         log_mnemonics=["RT"],
+        strict_input_output=True,        
+        alias_dict=alias_dict,  
+        drop_na=True,              
         return_dict=True,
     )
 
@@ -114,7 +115,7 @@ def LOOCV(
             Xy_train = pd.concat(
                 [las_dict[k] for k in las_dict.keys() if k != las_name], axis=0
             )
-
+            # print(Xy_test, '\n', Xy_train)
             X_train = Xy_train.values[:, :-1]
             y_train = Xy_train.values[:, -1:]
 
@@ -247,11 +248,12 @@ def LOOCV(
 TEST_folder = "7features_LOOCV_las"
 target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
 
-from models.models import model_xgb_7, model_stack
+from models.models import model_xgb_7
 
 # models = {"XGB_7": model_xgb_7, "MLP_7": model_mlp_7}
 # models = {"Stack": model_stack}
 models = {"XGB_7": model_xgb_7}
+
 
 # from models.models import models
 time0 = time.time()

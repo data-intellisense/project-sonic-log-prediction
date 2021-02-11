@@ -1,5 +1,6 @@
 #%% load necessary data for main.py
 import pickle
+import pandas as pd
 
 try:
     with open(f"data/las_data_DTSM_QC.pickle", "rb") as f:
@@ -48,3 +49,6 @@ try:
 except:
     print(" No 'las_data_TEST.pickle' loaded as it is NOT available!")
     las_data_TEST = None
+
+
+test_list = pd.read_csv('data/test_list.csv')

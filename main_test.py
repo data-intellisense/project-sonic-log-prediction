@@ -22,10 +22,10 @@ from sklearn.preprocessing import RobustScaler
 from plot import plot_crossplot, plot_logs_columns
 
 from load_pickle import (
+    alias_dict,
     las_data_DTSM_QC,
     las_lat_lon,
-    lat_lon_TEST,
-    alias_dict,
+    lat_lon_TEST,    
     las_data_TEST,
 )
 
@@ -163,17 +163,15 @@ Group1 = [
     "009-Well_09",
 ]
 
-# may need to retrain model with logRT
-
 #%  choose 7 features/predictors (not including 'DTSM')
-target_mnemonics = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT", "PEFZ"]
+target_mnemonics_7 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT", "PEFZ"]
 
 for WellName in Group1:
 
     df_TEST = las_data_TEST[WellName]
 
     y_predict = test_predict(
-        target_mnemonics=target_mnemonics,
+        target_mnemonics=target_mnemonics_7,
         model=model_xgb_7,
         df_TEST=df_TEST,
         las_data_DTSM=las_data_DTSM_QC,
@@ -195,7 +193,7 @@ WellName = "001-Well_01"
 df_TEST = las_data_TEST[WellName]
 print("Total row of data:", len(df_TEST))
 
-assert 1 == 2, "are you sure you get the top/btm part right?"
+
 df_TEST_7 = df_TEST[df_TEST.index <= 7900]
 df_TEST_7.shape
 
@@ -213,14 +211,14 @@ y_predict = test_predict(
 y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}_7features.csv")
 
 #% bottom part with 3 features, model_3_1
-target_mnemonics_3 = ["DTCO", "NPHI", "GR"]
+target_mnemonics_3_1 = ["DTCO", "NPHI", "GR"]
 
 df_TEST_3 = df_TEST[df_TEST.index > 7900]
 df_TEST_3.shape
 
 y_predict = test_predict(
-    target_mnemonics=target_mnemonics_3,
-    model=model_3_1,
+    target_mnemonics=target_mnemonics_3_1,
+    model=model_xgb_3_1,
     df_TEST=df_TEST_3,
     las_data_DTSM=las_data_DTSM_QC,
     lat_lon_TEST=None,
@@ -234,65 +232,45 @@ y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}_3features.csv")
 print(f"Prediction results are saved at: predictions/TEST")
 
 
-#%% check predicted data: "004-Well_04"
+#%% check predicted data: ["004-Well_04", "005-Well_05"]
 
-#% top part with 6 features
-target_mnemonics_6 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT"]
+#%  choose 7 features/predictors (not including 'DTSM')
+target_mnemonics_6_1 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT"]
 
-WellName = "004-Well_04"
-df_TEST = las_data_TEST[WellName]
-print("Total row of data:", len(df_TEST))
+Group2 = ["004-Well_04", "005-Well_05"]
 
+for WellName in Group2:
 
-y_predict = test_predict(
-    target_mnemonics=target_mnemonics_6,
-    model=model_6,
-    df_TEST=df_TEST,
-    las_data_DTSM=las_data_DTSM_QC,
-    lat_lon_TEST=None,
-    las_lat_lon=None,
-    sample_weight_type=2,
-    TEST_folder="TEST",
-)
+    df_TEST = las_data_TEST[WellName]
 
-y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}_6features.csv")
+    y_predict = test_predict(
+        target_mnemonics=target_mnemonics_6_1,
+        model=model_xgb_6_1,
+        df_TEST=df_TEST,
+        las_data_DTSM=las_data_DTSM_QC,
+        lat_lon_TEST=lat_lon_TEST[WellName],
+        las_lat_lon=las_lat_lon,
+        sample_weight_type=2,
+        TEST_folder="TEST",
+    )
 
-#%% check predicted data: "005-Well_05"
-
-#% top part with 6 features
-target_mnemonics_6 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT"]
-
-WellName = "005-Well_05"
-df_TEST = las_data_TEST[WellName]
-print("Total row of data:", len(df_TEST))
-
-
-y_predict = test_predict(
-    target_mnemonics=target_mnemonics_6,
-    model=model_6_1,
-    df_TEST=df_TEST,
-    las_data_DTSM=las_data_DTSM_QC,
-    lat_lon_TEST=None,
-    las_lat_lon=None,
-    sample_weight_type=2,
-    TEST_folder="TEST",
-)
-
-y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}.csv")
+    y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}.csv")
+    print("X_test and y_predict length:", len(df_TEST), len(y_predict))
+    print(f"Prediction results are saved at: predictions/TEST")
 
 
 #%% check predicted data: "006-Well_06"
 
 #% top part with 6 features
-target_mnemonics_6 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "PEFZ"]
+target_mnemonics_6_2 = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "PEFZ"]
 
 WellName = "006-Well_06"
 df_TEST = las_data_TEST[WellName]
 print("Total row of data:", len(df_TEST))
 
 y_predict = test_predict(
-    target_mnemonics=target_mnemonics_6,
-    model=model_6_2,
+    target_mnemonics=target_mnemonics_6_2,
+    model=model_xgb_6_2,
     df_TEST=df_TEST,
     las_data_DTSM=las_data_DTSM_QC,
     lat_lon_TEST=None,
@@ -320,7 +298,7 @@ df_TEST_7.shape
 
 y_predict = test_predict(
     target_mnemonics=target_mnemonics_7,
-    model=model_7,
+    model=model_xgb_7,
     df_TEST=df_TEST_7,
     las_data_DTSM=las_data_DTSM_QC,
     lat_lon_TEST=None,
@@ -333,13 +311,13 @@ y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}_7features.csv")
 
 #% model with 3 features: ["DTCO", "NPHI", "GR"], version 1
 #% bottom part with 3 features
-target_mnemonics_3 = ["DTCO", "GR", "RT"]
+target_mnemonics_3_2 = ["DTCO", "GR", "RT"]
 
-df_TEST_3 = df_TEST
+df_TEST_3 = df_TEST[df_TEST.index < 8700]
 df_TEST_3.shape
 
 y_predict = test_predict(
-    target_mnemonics=target_mnemonics_3,
+    target_mnemonics=target_mnemonics_3_2,
     model=model_3_1,
     df_TEST=df_TEST_3,
     las_data_DTSM=las_data_DTSM_QC,

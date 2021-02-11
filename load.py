@@ -173,26 +173,6 @@ with open("data/las_data_DTSM_QC.pickle", "wb") as f:
     pickle.dump(las_data_DTSM_QC, f)
 
 
-#%% write test_list
-# with open("data/las_data_DTSM_QC.pickle", "rb") as f:
-#     las_data_DTSM_QC = pickle.load(f)
-
-target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
-
-test_list = []
-for WellName, df in las_data_DTSM_QC.items():
-    if (
-        process_las().get_df_by_mnemonics(
-            df=df, target_mnemonics=target_mnemonics, alias_dict=alias_dict
-        )
-        is not None
-    ):
-        test_list.append(WellName)
-    print(df.columns)
-
-test_list = pd.DataFrame(test_list, columns=["Test LAS"])
-test_list.to_csv("data/test_list.csv")
-
 #%% write las_depth
 with open(f"data/las_data_DTSM_QC.pickle", "rb") as f:
     las_data_DTSM_QC = pickle.load(f)
@@ -206,3 +186,29 @@ for key, df in las_data_DTSM_QC.items():
 # write las_depth
 with open("data/las_depth.pickle", "wb") as f:
     pickle.dump(las_depth, f)
+
+
+#%% write 107 test files
+with open(f"data/las_data_DTSM_QC.pickle", "rb") as f:
+    las_data_DTSM_QC = pickle.load(f)
+
+target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
+
+las_dict = process_las().get_compiled_df_from_las_dict(
+        las_data_dict=las_data_DTSM_QC,
+        target_mnemonics=target_mnemonics,
+        new_mnemonics=['DEPTH'],
+        log_mnemonics=["RT"],
+        strict_input_output=True,        
+        alias_dict=alias_dict,  
+        drop_na=True,              
+        return_dict=True,
+    )
+
+test_list = []
+for WellName in las_dict.keys():
+    test_list.append(WellName)
+
+test_list = pd.DataFrame(test_list, columns=["Test LAS"])
+test_list.to_csv("data/test_list.csv", index_label=False)
+

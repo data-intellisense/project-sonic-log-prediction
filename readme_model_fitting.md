@@ -28,3 +28,22 @@ XGB_7: rmse = 9.80 (108 files) with log_mnemonics = ['RT', 'NPHI'], scaling
 
  Bad!! Using difference to do time series prediction. 20 neighboring wells were used to predict the seleted well. rmse was way to high.
 
+
+# XGB model tuning
+
+## target_mnemonics =["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
+## new_mnomonics = ['DEPTH'] 
+add gradient of ['NPHI', 'GR', 'RHOB'] is not useful
+
+Mean-Model rmse:	0.61
+MLR rmse:	0.13
+RCV rmse:	0.13
+
+
+XGB_7: rmse to beat: 10.06
+
+
+KNN_7: rmse = 7 in tuning but 11.42 in testing!
+
+
+Should I fix DTCO flat data? Yes! Look at Well 62!

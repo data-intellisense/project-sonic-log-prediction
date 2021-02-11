@@ -217,126 +217,6 @@ def plot_wells_3D(
         return fig
 
 
-def plot_3DWell(las_name_test=None, las_data_DTSM=None, display_weight=True):
-    assert isinstance(las_name_test, str)
-    assert isinstance(las_data_DTSM, dict)
-    assert all([las_name_test in las_data_DTSM.keys()])
-
-    if display_weight:
-        title = "Wellbore Visualization | Test well shown as the center well | Wellbore thickness indicates its sample_weight in training"
-        plot_save_file_name = "wellbore_3D_weighted.html"
-    else:
-        title = "Wellbore Visualization | Test well shown as the center well"
-        plot_save_file_name = "wellbore_3D_not_weighted.html"
-
-    fig = go.Figure()
-
-    width_dict = get_distance_weight(las_name=las_name_test, las_dict=las_data_DTSM)
-
-    # add line connections from all wells to test well
-    connect_dict = dict()
-    connect_dict[las_name_test] = pd.DataFrame(
-        [las_data_DTSM[las_name_test].index.values.mean()], columns=["Depth"]
-    )
-    connect_dict[las_name_test][["Lat", "Lon"]] = las_lat_lon[las_name_test]
-    connect_dict[las_name_test]["Las_Name"] = las_name_test
-
-    # create data for each wellbore and plot it
-    depth_dict = dict()
-    for key in las_data_DTSM.keys():
-        ix = list(las_data_DTSM[key].index.values)
-        ix_ = random.sample(ix, 8)
-        depth_dict[key] = pd.DataFrame(
-            sorted(ix_ + [min(ix)] + [max(ix)]), columns=["Depth"]
-        )
-        depth_dict[key][["Lat", "Lon"]] = las_lat_lon[key]
-        depth_dict[key]["Las_Name"] = key
-
-        if key != las_name_test:
-            connect_dict[key] = pd.concat(
-                [
-                    connect_dict[las_name_test],
-                    depth_dict[key].iloc[[0, 9]],
-                    connect_dict[las_name_test],
-                ],
-                axis=0,
-            )
-
-        fig.add_traces(
-            go.Scatter3d(
-                x=depth_dict[key]["Lat"],
-                y=depth_dict[key]["Lon"],
-                z=depth_dict[key]["Depth"],
-                showlegend=False,
-                name=key,
-                mode="lines",
-                line=dict(width=[10, width_dict[key]][display_weight]),
-                # hoverinfo='skip',
-                hovertemplate="<br><b>Depth<b>: %{z:.0f}",
-            )
-        )
-
-        fig.add_traces(
-            go.Scatter3d(
-                x=connect_dict[key]["Lat"],
-                y=connect_dict[key]["Lon"],
-                z=connect_dict[key]["Depth"],
-                showlegend=False,
-                mode="lines",
-                line=dict(width=1),
-                hoverinfo="skip",
-            )
-        )
-
-    fig.update_layout(
-        scene_camera=dict(eye=dict(x=2, y=0, z=0.0)),
-        template="plotly_dark",
-        height=1300,
-        paper_bgcolor="#000000",
-        plot_bgcolor="#000000",
-        title=dict(
-            text=title, x=0.5, xanchor="center", font=dict(color="Lime", size=20)
-        ),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=0.06,
-            xanchor="center",
-            x=0.5,
-        ),
-    )
-
-    fig.update_scenes(
-        xaxis=dict(
-            title="",
-            showgrid=False,
-            showline=False,
-            showbackground=False,
-            showticklabels=False,
-            # range=[ ]
-        ),
-        yaxis=dict(
-            title="",
-            showgrid=False,
-            showline=False,
-            showbackground=False,
-            showticklabels=False,
-            # range = [ ]
-        ),
-        zaxis=dict(
-            title="",
-            showgrid=False,
-            showline=False,
-            showbackground=False,
-            showticklabels=False,
-            range=(25000, 0),
-        ),
-    ),
-
-    fig.show()
-    fig.write_html(f"predictions/{plot_save_file_name}")
-
-
 #%% simple plot of all curves in one column, good for quick plotting
 
 
@@ -549,8 +429,8 @@ def plot_logs_columns(
 
 #%% plot predicted and actual in a crossplot
 def plot_crossplot(
-    y_actual,
-    y_predict,
+    y_actual=None,
+    y_predict=None,
     text=None,
     axis_range=300,
     include_diagnal_line=False,

@@ -413,11 +413,11 @@ class process_las:
         self,
         df=None,
         target_mnemonics=None,
-        alias_dict=None,
+        new_mnemonics=[],
+        log_mnemonics=[],
         strict_input_output=True,
-        add_DEPTH_col=False,
+        alias_dict=None,        
         drop_na=True,
-        log_mnemonics=["RT"],
     ):
         """
         useage: get a cleaned dataframe by given mnemonics,
@@ -426,6 +426,11 @@ class process_las:
             if false, will output a df with all possible mnemonis found in las
         """
         assert alias_dict is not None, "alias_dict is None, assign alias_dict!"
+
+        possible_mnemonics=['DEPTH', 'DTCO', 'NPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
+        assert all([i in possible_mnemonics for i in new_mnemonics]), \
+            f'new_mnemonics should only contain mnemonics in {possible_mnemonics}'
+
         df = df.copy()
         # check required parameters
         if target_mnemonics is None:
@@ -469,41 +474,38 @@ class process_las:
                 df_ = temp
             else:
                 df_ = np.c_[df_, temp]
+
         if df_ is None:
+            print('No data found for any requested mnemonics!')
             return None
         else:
             df_ = pd.DataFrame(df_, columns=df_cols)
             df_.index = df.index
-
-        # add a 'DEPTH' feature as it may be useful
-        # df_['DEPTH'] = df.index
-
-        # dropped rows with na in DTSM column
-        # try:
-        #     df_ = df_.dropna(subset=['DTSM'])
-        # except:
-        #     print('\tNo DTSM column, no na dropped!')
-
-        if drop_na:
-            df_ = df_.dropna(axis=0)
-
+        
         for col in log_mnemonics:
             if col in df_.columns:
                 df_[col] = abs(df_[col]) + 1e-4
                 df_[col] = np.log(df_[col])
-
-        if add_DEPTH_col:
-            if "DEPTH" not in df_.columns:
-                df_["DEPTH"] = df_.index
-                cols = df_.columns.to_list()
-                df_ = df_[cols[-1:] + cols[:-1]]
             else:
-                print("'DEPTH' column already existed!")
+                print(f'\t{col} not in columns, no log conversion performed!')
 
-        # add gradient of NPHI, GR and RHOB
-        if "NPHI" in df_.columns:
-            df_["dNPHI"] = df_["NPHI"]
-            df_["dNPHI"] = df_["dNPHI"].diff(periods=1, axis=0)
+
+        # remove data that's "abnormal"
+        mnemonic_range = {
+            'DTSM': [60,250],
+            'DTCO': [10,200],
+            'GR':   [0, 290],
+            'NPHI': [0, 0.6],
+            'PEFZ': [0,11],
+            'RHOB': [1, 3.2],
+            'CALI': [0, 25],
+        }
+
+        for key, value in mnemonic_range.items():
+            if key in df_.columns:
+                df_[key] = df_[key][(df_[key]>=value[0]) & (df_[key]<=value[1])]
+
+
 
         if strict_input_output and (len(target_mnemonics) != len(df_.columns)):
             print(
@@ -512,25 +514,45 @@ class process_las:
             return None
 
         elif not strict_input_output and (len(target_mnemonics) != len(df_.columns)):
-            print(f"\tNo all target mnemonics are in df, returned PARTIAL dataframe!")
+            print(f"\tNo all target mnemonics are in df, returned PARTIAL dataframe, none conversion performed!")
             # better to drop all na in all columns
             return df_
 
-        else:
+        elif strict_input_output and (len(target_mnemonics) == len(df_.columns)):
             print(
                 f"\tAll target mnemonics are found in df, returned COMPLETE dataframe!"
             )
-            # better to drop all na in all columns
+ 
+            # add gradient if requested (e.g. NPHI, GR and RHOB), and add 'DEPTH' col if requested
+            for col in new_mnemonics:
+                if col == 'DEPTH':
+                    df_[col] = df_.index                
+                elif col in df_.columns:
+                    df_[f'd{col}'] = df_[col].diff(periods=1)
+            # drop na from the resulting dataframe, do not do it when it's TEST dataset
+
+            # rerange the columns requence, 'DTSM' always the last columns
+            if 'DTSM' in df_.columns:
+                df_ = df_[list(df_.columns.difference(['DTSM']))+['DTSM']]
+            else:
+                print('DTSM not in dataset, no column rearranging occurred.')
+
+            if drop_na:
+                df_ = df_.dropna(axis=0)
+
             return df_
+        else:
+            return None
 
     def get_compiled_df_from_las_dict(
         self,
         las_data_dict=None,
         target_mnemonics=None,
-        alias_dict=None,
+        new_mnemonics=[],
+        log_mnemonics=[],
         strict_input_output=True,
-        add_DEPTH_col=True,
-        log_mnemonics=["RT"],
+        alias_dict=None,                
+        drop_na=True,
         return_dict=False,
     ):
 
@@ -545,23 +567,14 @@ class process_las:
             df = self.get_df_by_mnemonics(
                 df=df,
                 target_mnemonics=target_mnemonics,
-                strict_input_output=True,
-                alias_dict=alias_dict,
-                log_mnemonics=log_mnemonics,
+                new_mnemonics=new_mnemonics,
+                log_mnemonics=log_mnemonics,                
+                strict_input_output=strict_input_output,
+                alias_dict=alias_dict,                
+                drop_na=drop_na,
             )
 
-            if (df is not None) and len(df > 1):
-
-                # add 'DEPTH' as a feature and rearrange columns
-
-                if add_DEPTH_col:
-                    if "DEPTH" not in df.columns:
-                        df["DEPTH"] = df.index
-                        cols = df.columns.to_list()
-                        df = df[cols[-1:] + cols[:-1]]
-                    else:
-                        print("'DEPTH' column already existed!")
-
+            if (df is not None) and len(df > 1):                
                 target_las_dict[key] = df
 
         print(
@@ -574,8 +587,6 @@ class process_las:
             return target_las_dict
         else:
             return df_
-
-
 class MeanRegressor(BaseEstimator, RegressorMixin):
     def __init__(self):
         return None

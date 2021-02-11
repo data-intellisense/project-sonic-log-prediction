@@ -9,20 +9,20 @@ from sklearn.ensemble import StackingRegressor
 
 # # choose the best model with tuned hyper parameters
 
-# neural network model
-params_mlp_7 = {
-    "learning_rate_init": 0.01,
-    "hidden_layer_sizes": (100,),
-    "alpha": 0.001,
-}
-model_mlp_7 = MLP(
-    random_state=42,
-    learning_rate="adaptive",
-    activation="relu",
-    max_iter=200,
-    early_stopping=True,
-    **params_mlp_7
-)
+# # neural network model
+# params_mlp_7 = {
+#     "learning_rate_init": 0.01,
+#     "hidden_layer_sizes": (100,),
+#     "alpha": 0.001,
+# }
+# model_mlp_7 = MLP(
+#     random_state=42,
+#     learning_rate="adaptive",
+#     activation="relu",
+#     max_iter=200,
+#     early_stopping=True,
+#     **params_mlp_7
+# )
 
 # using randomizedsearchcv, lowest rmse, 9.85
 # target_mnemonics = ["DTCO", "NPHI", "RHOB", "GR", "CALI", "RT", "PEFZ"]
@@ -40,40 +40,31 @@ model_mlp_7 = MLP(
 #     "lambda": 72,
 # }
 
-# xgb model based the difference of 7 features, RobustScaler,  rmse=9.025
-params_xgb_7 = {
-    "subsample": 0.8999999999999999,
-    "n_estimators": 150,
-    "min_child_weight": 0.08,
-    "max_depth": 3,
-    "learning_rate": 0.03906939937054615,
-    "lambda": 31,
-}
-
-model_xgb_7 = XGB(**params_xgb_7, tree_method="hist", objective="reg:squarederror")
-
-
-
-# xgb model based the difference of 7 features, not scaled
-# params_xgb_d7 = {
-#     "subsample": 0.9999999999999999,
+# # xgb model based the 7 features, RobustScaler,  rmse=9.025
+# params_xgb_7 = {
+#     "subsample": 0.8999999999999999,
 #     "n_estimators": 150,
-#     "min_child_weight": 0.38,
-#     "max_depth": 4,
-#     "learning_rate": 0.06866488450042998,
-#     "lambda": 97,
+#     "min_child_weight": 0.08,
+#     "max_depth": 3,
+#     "learning_rate": 0.03906939937054615,
+#     "lambda": 31,
 # }
 
-# xgb model based the difference of 7 features, RobustScaler
-params_xgb_d7 = {
-    "subsample": 0.8999999999999999,
-    "n_estimators": 100,
-    "min_child_weight": 0.09,
-    "max_depth": 3,
-    "learning_rate": 0.1,
-    "lambda": 67,
-}
-model_xgb_d7 = XGB(**params_xgb_d7, tree_method="hist", objective="reg:squarederror")
+# xgb model based on 7 features + 3 feature diff [NPHI, GR, RHOB], + 1 Depth
+# params_xgb_7 = {'subsample': 0.82, 'n_estimators': 180, 
+#     'min_child_weight': 0.32, 'max_depth': 3, 'learning_rate': 0.016768329368110076, 
+#     'gamma': 7, 'colsample_bytree': 0.9}
+
+# 7 features, rmse in tuning:  0.10165231, testing: 9.62, 9.7 with sample_weight2
+params_xgb_7 = {'subsample': 0.94,
+ 'n_estimators': 140,
+ 'min_child_weight': 0.09,
+ 'max_depth': 3,
+ 'learning_rate': 0.03906939937054615,
+ 'gamma': 5,
+ 'colsample_bytree': 0.94}
+
+model_xgb_7 = XGB(**params_xgb_7, tree_method="hist", objective="reg:squarederror")
 
 # using Bayesian Optimization, lowest cv rmse 10.1, loocv las rmse: 10.69
 params_xgb_7_1 = {
@@ -175,3 +166,9 @@ estimators = [
 ]
 
 model_stack = StackingRegressor(estimators=estimators, final_estimator=RCV())
+
+#%% KNN model
+
+params_knn_7 = {'weights': 'uniform', 'n_neighbors': 13, 'algorithm': 'auto'}
+
+model_knn_7 = KNN(**params_knn_7)

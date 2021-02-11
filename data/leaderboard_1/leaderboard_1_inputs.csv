@@ -1,11 +1,11 @@
-﻿WellName,Curves to remove,Comments,Features
-001-Well_01,"DTRP, NPOR_LS, TNPH_LS, TNPH_SS, GRS, HLLD, HLLS, LLS, MSFL, RXOZ, HCALR_1, HCALR",,"7features+[DTCO, GR, NPHI]"
-002-Well_02,"LLS, MSFL",,7features
-003-Well_03,"AT10, AT30, GR",,7features
-004-Well_04,"RHOZ, ILD, SFLU, HCALD, PEFZ","Missing DTCO around 16k, PEFZ all nan",6features [~PEFZ]
-005-Well_05,PEFS,no PEFZ,7features+6features [~PEFZ]
-006-Well_06,,"need to fix DTCO, no RT",6features[~RT]
-007-Well_07,"GRR, GRS, LLS, MSFL, CAL1R, CALD, CALS",,7features
-008-Well_08,"GRS, GRR, SFLU",,7features
-009-Well_09,"AT10, AT30",,7features
-010-Well_10,"RHOB, AT20, AT30, AF20,CALD, PEF",,"7features+[DTCO, GR, RT]"
+﻿WellName,Curves to remove,Comments,Features,Models
+001-Well_01,"DTRP,NPHI, TNPH_LS, TNPH_SS, GRD, HLLD, HLLS, LLS, MSFL, RXOZ, HCALR_1, HCALR","7900 mark,  SPHI_LS (replace NPHI with this if using raw file)","7features+[DTCO, GR, NPHI]","model_xgb_7, model_xgb_3_1"
+002-Well_02,"LLS, MSFL",,7features,model_xgb_7 
+003-Well_03,"AT10, AT30, GR",,7features,model_xgb_7 
+004-Well_04,"RHOZ, ILD, SFLU, HCALD, PEFZ","Missing DTCO around 16k, PEFZ all nan",6features [~PEFZ],model_xgb_6_1
+005-Well_05,PEFS,no PEFZ,6features [~PEFZ],model_xgb_6_1
+006-Well_06,,"need to fix DTCO, model_xgb_DTCO_5",6features[~RT],model_xgb_6_2
+007-Well_07,"GRR, GRS, LLS, MSFL, CAL1R, CALD, CALS",,7features,model_xgb_7 
+008-Well_08,"GRS, GRR, SFLU","need to fix DTCO,  model_xgb_DTCO_6",7features,model_xgb_7 
+009-Well_09,"AT10, AT30",,7features,model_xgb_7 
+010-Well_10,"RHOB, AT20, AT30, AF20,CALD, PEF",8650 mark,"[DTCO, GR, RT]+7features","model_xgb_3_2, model_xgb_7 "
