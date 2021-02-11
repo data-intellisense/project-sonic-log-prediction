@@ -14,21 +14,24 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
 from sklearn.base import BaseEstimator, RegressorMixin
 
+
 def to_pkl(data, path):
-    '''
+    """
     'path' should be a path with file name
-    '''
-    with open(path, 'wb') as f:
+    """
+    with open(path, "wb") as f:
         pickle.dump(data, f)
     return None
 
+
 def read_pkl(path):
-    '''
+    """
     'path' should be a path with file name
-    '''
-    with open(path, 'rb') as f:
+    """
+    with open(path, "rb") as f:
         data = pickle.load(f)
     return data
+
 
 # given a mnemonic, find all of its alias
 def get_alias(mnemonic, alias_dict=None):
@@ -49,6 +52,7 @@ def get_mnemonic(alias=None, alias_dict=None):
 
 
 #%% read las, return curves and data etc.
+
 
 class read_las:
     def __init__(self, las):
@@ -413,7 +417,7 @@ class process_las:
         strict_input_output=True,
         add_DEPTH_col=False,
         drop_na=True,
-        log_mnemonics=['RT'],
+        log_mnemonics=["RT"],
     ):
         """
         useage: get a cleaned dataframe by given mnemonics,
@@ -486,7 +490,7 @@ class process_las:
         for col in log_mnemonics:
             if col in df_.columns:
                 df_[col] = abs(df_[col]) + 1e-4
-                df_[col] = np.log(df_[col])            
+                df_[col] = np.log(df_[col])
 
         if add_DEPTH_col:
             if "DEPTH" not in df_.columns:
@@ -495,6 +499,11 @@ class process_las:
                 df_ = df_[cols[-1:] + cols[:-1]]
             else:
                 print("'DEPTH' column already existed!")
+
+        # add gradient of NPHI, GR and RHOB
+        if "NPHI" in df_.columns:
+            df_["dNPHI"] = df_["NPHI"]
+            df_["dNPHI"] = df_["dNPHI"].diff(periods=1, axis=0)
 
         if strict_input_output and (len(target_mnemonics) != len(df_.columns)):
             print(
@@ -521,7 +530,7 @@ class process_las:
         alias_dict=None,
         strict_input_output=True,
         add_DEPTH_col=True,
-        log_mnemonics=['RT'],
+        log_mnemonics=["RT"],
         return_dict=False,
     ):
 
