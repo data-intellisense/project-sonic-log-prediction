@@ -189,16 +189,16 @@ pio.renderers.default = "browser"
 mnemonic_dict = {
     # "DTSM" as response
     '7':   ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    # '7_1': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    # '7_2': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    # '6_1': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "DTSM"],
-    # '6_2': ["DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
-    # '3_1': ["DTCO", "NPHI", "GR", "DTSM"],
-    # '3_2': ["DTCO",  "GR", "RT", "DTSM"],
+    '7_1': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
+    '7_2': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
+    '6_1': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "DTSM"],
+    '6_2': ["DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
+    '3_1': ["DTCO", "NPHI", "GR", "DTSM"],
+    '3_2': ["DTCO",  "GR", "RT", "DTSM"],
 
-    # # "DTCO" as response,for well 6 and 8, to fix DTCO
-    # 'DTCO_5': ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTCO"],
-    # 'DTCO_6': ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "RT", "DTCO"],
+    # "DTCO" as response,for well 6 and 8, to fix DTCO
+    'DTCO_5': ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTCO"],
+    'DTCO_6': ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "RT", "DTCO"],
 }
 
 # create a dictionary to save all the models    
@@ -219,17 +219,17 @@ for model_name, target_mnemonics in mnemonic_dict.items():
             drop_na=True,
         )
 
-    print(Xy.sample(10))
+    # print(Xy.sample(10))
 
     scaler_x, scaler_y = RobustScaler(), RobustScaler()
     X_train = scaler_x.fit_transform(Xy.iloc[:, :-1])
-    y_train = scaler_y.fit_transform( Xy.iloc[:, -1:])
+    y_train = scaler_y.fit_transform(Xy.iloc[:, -1:])
 
     # RandomizedSearchCV to find best hyperparameter combination
         
     param_distributions = {
         "n_estimators": range(100, 300, 20),
-        "max_depth": range(1, 7),
+        "max_depth": range(1, 9),
         "min_child_weight": np.arange(0.01, 0.4, 0.01),
         "learning_rate": np.logspace(-3, -1),
         "subsample": np.arange(0.8, 1.02, 0.02),
@@ -238,23 +238,27 @@ for model_name, target_mnemonics in mnemonic_dict.items():
     }
     
     RandCV = RandomizedSearchCV(
-        estimator=XGB(tree_method="hist", objective="reg:squarederror"),
+        estimator=XGB(tree_method="gpu_hist", objective="reg:squarederror"),
         param_distributions=param_distributions,
-        n_iter=2,
+        n_iter=100,
         scoring="neg_root_mean_squared_error",
         cv=5,
-        verbose=2,
+        verbose=1,
     )
 
     RandCV.fit(X=X_train, y=y_train)    
     
-    model_xgb[f'model_xgb_{model_name}'] = XGB(**RandCV.best_params_, tree_method="hist", objective="reg:squarederror")
+    model_xgb[f'model_xgb_{model_name}'] = XGB(**RandCV.best_params_, 
+        tree_method="gpu_hist", objective="reg:squarederror")
     # print("best parameters:", RandCV.best_params_)
     
     # retrain the model with best parameters 
     model_xgb[f'model_xgb_{model_name}'].fit(X=X_train, y=y_train)
 
-# save all models to pickle file  
-to_pkl(model_xgb, f'predictions/tuning/Tuned_Trained_XGB_Models.pickle' )
+    # save all models to pickle file each iteration, in case of crashes
+    to_pkl(model_xgb, f'predictions/tuning/Tuned_Trained_XGB_Models.pickle')
 
-print(f"Completed training with all models in {time.time()-time0:.1f} seconds!")
+print(f"\nCompleted training and saved all models in {time.time()-time0:.1f} seconds!")
+
+# models=read_pkl(f'predictions/tuning/Tuned_Trained_XGB_Models.pickle' )
+# print(models)
