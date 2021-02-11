@@ -416,7 +416,7 @@ class process_las:
         new_mnemonics=[],
         log_mnemonics=[],
         strict_input_output=True,
-        alias_dict=None,        
+        alias_dict=None,
         drop_na=True,
     ):
         """
@@ -427,9 +427,19 @@ class process_las:
         """
         assert alias_dict is not None, "alias_dict is None, assign alias_dict!"
 
-        possible_mnemonics=['DEPTH', 'DTCO', 'NPHI', 'RHOB', 'GR', 'CALI', 'RT', 'PEFZ']
-        assert all([i in possible_mnemonics for i in new_mnemonics]), \
-            f'new_mnemonics should only contain mnemonics in {possible_mnemonics}'
+        possible_mnemonics = [
+            "DEPTH",
+            "DTCO",
+            "NPHI",
+            "RHOB",
+            "GR",
+            "CALI",
+            "RT",
+            "PEFZ",
+        ]
+        assert all(
+            [i in possible_mnemonics for i in new_mnemonics]
+        ), f"new_mnemonics should only contain mnemonics in {possible_mnemonics}"
 
         df = df.copy()
         # check required parameters
@@ -476,66 +486,67 @@ class process_las:
                 df_ = np.c_[df_, temp]
 
         if df_ is None:
-            print('No data found for any requested mnemonics!')
+            print("No data found for any requested mnemonics!")
             return None
         else:
             df_ = pd.DataFrame(df_, columns=df_cols)
             df_.index = df.index
-        
+
         for col in log_mnemonics:
             if col in df_.columns:
                 df_[col] = abs(df_[col]) + 1e-4
                 df_[col] = np.log(df_[col])
             else:
-                print(f'\t{col} not in columns, no log conversion performed!')
-
+                print(f"\t{col} not in columns, no log conversion performed!")
 
         # remove data that's "abnormal"
         mnemonic_range = {
-            'DTSM': [60,250],
-            'DTCO': [10,200],
-            'GR':   [0, 290],
-            'NPHI': [0, 0.6],
-            'PEFZ': [0,11],
-            'RHOB': [1, 3.2],
-            'CALI': [0, 25],
+            "DTSM": [60, 250],
+            "DTCO": [10, 200],
+            "GR": [0, 290],
+            "NPHI": [0, 0.6],
+            "PEFZ": [0, 11],
+            "RHOB": [1, 3.2],
+            "CALI": [0, 25],
         }
 
         for key, value in mnemonic_range.items():
             if key in df_.columns:
-                df_[key] = df_[key][(df_[key]>=value[0]) & (df_[key]<=value[1])]
-
-
+                df_[key] = df_[key][(df_[key] >= value[0]) & (df_[key] <= value[1])]
 
         if strict_input_output and (len(target_mnemonics) != len(df_.columns)):
-            print(
-                f"\tNo all target mnemonics are found in df, strict_input_output rule applied, returned None!"
-            )
+            # print(
+            #     f"\tNo all target mnemonics are found in df, strict_input_output rule applied, returned None!"
+            # )
             return None
 
         elif not strict_input_output and (len(target_mnemonics) != len(df_.columns)):
-            print(f"\tNo all target mnemonics are in df, returned PARTIAL dataframe, none conversion performed!")
+            # print(
+            #     f"\tNo all target mnemonics are in df, returned PARTIAL dataframe, none conversion performed!"
+            # )
             # better to drop all na in all columns
             return df_
 
         elif strict_input_output and (len(target_mnemonics) == len(df_.columns)):
-            print(
-                f"\tAll target mnemonics are found in df, returned COMPLETE dataframe!"
-            )
- 
+            # print(
+            #     f"\tAll target mnemonics are found in df, returned COMPLETE dataframe!"
+            # )
+
             # add gradient if requested (e.g. NPHI, GR and RHOB), and add 'DEPTH' col if requested
             for col in new_mnemonics:
-                if col == 'DEPTH':
-                    df_[col] = df_.index                
+                if col == "DEPTH":
+                    df_[col] = df_.index
                 elif col in df_.columns:
-                    df_[f'd{col}'] = df_[col].diff(periods=1)
+                    df_[f"d{col}"] = df_[col].diff(periods=1)
             # drop na from the resulting dataframe, do not do it when it's TEST dataset
 
             # rerange the columns requence, 'DTSM' always the last columns
-            if 'DTSM' in df_.columns:
-                df_ = df_[list(df_.columns.difference(['DTSM']))+['DTSM']]
+            if ("DTSM" in df_.columns) and ("DTSM" == target_mnemonics[-1]):
+                df_ = df_[list(df_.columns.difference(["DTSM"])) + ["DTSM"]]
+            elif ("DTCO" in df_.columns) and ("DTCO" == target_mnemonics[-1]):
+                df_ = df_[list(df_.columns.difference(["DTCO"])) + ["DTCO"]]
             else:
-                print('DTSM not in dataset, no column rearranging occurred.')
+                print("DTSM or DTCO not in dataset, no column rearranging occurred.")
 
             if drop_na:
                 df_ = df_.dropna(axis=0)
@@ -551,7 +562,7 @@ class process_las:
         new_mnemonics=[],
         log_mnemonics=[],
         strict_input_output=True,
-        alias_dict=None,                
+        alias_dict=None,
         drop_na=True,
         return_dict=False,
     ):
@@ -568,13 +579,13 @@ class process_las:
                 df=df,
                 target_mnemonics=target_mnemonics,
                 new_mnemonics=new_mnemonics,
-                log_mnemonics=log_mnemonics,                
+                log_mnemonics=log_mnemonics,
                 strict_input_output=strict_input_output,
-                alias_dict=alias_dict,                
+                alias_dict=alias_dict,
                 drop_na=drop_na,
             )
 
-            if (df is not None) and len(df > 1):                
+            if (df is not None) and len(df > 1):
                 target_las_dict[key] = df
 
         print(
@@ -587,6 +598,8 @@ class process_las:
             return target_las_dict
         else:
             return df_
+
+
 class MeanRegressor(BaseEstimator, RegressorMixin):
     def __init__(self):
         return None

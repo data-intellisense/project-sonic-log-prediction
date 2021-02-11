@@ -35,7 +35,6 @@ from plot import plot_crossplot, plot_logs_columns
 from load_pickle import alias_dict, las_data_DTSM_QC
 
 
-
 # load customized functions and requried dataset
 from util import (
     get_alias,
@@ -45,7 +44,7 @@ from util import (
     process_las,
     MeanRegressor,
     to_pkl,
-    read_pkl
+    read_pkl,
 )
 
 pio.renderers.default = "browser"
@@ -86,15 +85,15 @@ pio.renderers.default = "browser"
 # if not os.path.exists(f"predictions/{TEST_folder}"):
 #     os.mkdir(f"predictions/{TEST_folder}")
 
-# target_mnemonics = target_mnemonics + ["DTSM"] 
+# target_mnemonics = target_mnemonics + ["DTSM"]
 
 # Xy = process_las().get_compiled_df_from_las_dict(
 #         las_data_dict=las_data_DTSM_QC,
 #         target_mnemonics=target_mnemonics,
 #         new_mnemonics=['DEPTH'],
 #         log_mnemonics=["RT"],
-#         strict_input_output=True,        
-#         alias_dict=alias_dict,                
+#         strict_input_output=True,
+#         alias_dict=alias_dict,
 #         return_dict=False,
 #         drop_na=True,
 #     )
@@ -195,13 +194,12 @@ mnemonic_dict = {
     # '6_2': ["DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
     # '3_1': ["DTCO", "NPHI", "GR", "DTSM"],
     # '3_2': ["DTCO",  "GR", "RT", "DTSM"],
-
     # "DTCO" as response,for well 6 and 8, to fix DTCO
-    'DTCO_5': ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTCO"],
-    'DTCO_6': ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "RT", "DTCO"],
+    "DTCO_5": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTCO"],
+    "DTCO_6": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "RT", "DTCO"],
 }
 
-# create a dictionary to save all the models    
+# create a dictionary to save all the models
 model_xgb = dict()
 
 time0 = time.time()
@@ -209,15 +207,15 @@ time0 = time.time()
 for model_name, target_mnemonics in mnemonic_dict.items():
 
     Xy = process_las().get_compiled_df_from_las_dict(
-            las_data_dict=las_data_DTSM_QC,
-            target_mnemonics=target_mnemonics,
-            new_mnemonics=['DEPTH'],
-            log_mnemonics=["RT"],
-            strict_input_output=True,        
-            alias_dict=alias_dict,                
-            return_dict=False,
-            drop_na=True,
-        )
+        las_data_dict=las_data_DTSM_QC,
+        target_mnemonics=target_mnemonics,
+        new_mnemonics=["DEPTH"],
+        log_mnemonics=["RT"],
+        strict_input_output=True,
+        alias_dict=alias_dict,
+        return_dict=False,
+        drop_na=True,
+    )
 
     # print(Xy.sample(10))
 
@@ -226,7 +224,7 @@ for model_name, target_mnemonics in mnemonic_dict.items():
     y_train = scaler_y.fit_transform(Xy.iloc[:, -1:])
 
     # RandomizedSearchCV to find best hyperparameter combination
-        
+
     param_distributions = {
         "n_estimators": range(100, 300, 20),
         "max_depth": range(1, 9),
@@ -234,9 +232,9 @@ for model_name, target_mnemonics in mnemonic_dict.items():
         "learning_rate": np.logspace(-3, -1),
         "subsample": np.arange(0.8, 1.02, 0.02),
         "colsample_bytree": np.arange(0.8, 1.02, 0.02),
-        "gamma": range(0,10),
+        "gamma": range(0, 10),
     }
-    
+
     RandCV = RandomizedSearchCV(
         estimator=XGB(tree_method="gpu_hist", objective="reg:squarederror"),
         param_distributions=param_distributions,
@@ -246,17 +244,18 @@ for model_name, target_mnemonics in mnemonic_dict.items():
         verbose=2,
     )
 
-    RandCV.fit(X=X_train, y=y_train)    
-    
-    model_xgb[f'model_xgb_{model_name}'] = XGB(**RandCV.best_params_, 
-        tree_method="gpu_hist", objective="reg:squarederror")
+    RandCV.fit(X=X_train, y=y_train)
+
+    model_xgb[f"model_xgb_{model_name}"] = XGB(
+        **RandCV.best_params_, tree_method="gpu_hist", objective="reg:squarederror"
+    )
     # print("best parameters:", RandCV.best_params_)
-    
-    # retrain the model with best parameters 
-    model_xgb[f'model_xgb_{model_name}'].fit(X=X_train, y=y_train)
+
+    # retrain the model with best parameters
+    model_xgb[f"model_xgb_{model_name}"].fit(X=X_train, y=y_train)
 
     # save all models to pickle file each iteration, in case of crashes
-    to_pkl(model_xgb, f'predictions/tuning/Tuned_Trained_XGB_Models.pickle')
+    to_pkl(model_xgb, f"predictions/tuning/Tuned_Trained_XGB_Models.pickle")
 
 print(f"\nCompleted training and saved all models in {time.time()-time0:.1f} seconds!")
 

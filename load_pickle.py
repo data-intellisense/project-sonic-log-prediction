@@ -1,6 +1,7 @@
 #%% load necessary data for main.py
 import pickle
 import pandas as pd
+from util import read_pkl
 
 try:
     with open(f"data/las_data_DTSM_QC.pickle", "rb") as f:
@@ -51,4 +52,8 @@ except:
     las_data_TEST = None
 
 
-test_list = pd.read_csv('data/test_list.csv')
+test_list = pd.read_csv("data/test_list.csv")
+
+
+model_xgb_DTSM = read_pkl("models/Tuned_Trained_XGB_Models_DTSM.pickle")
+model_xgb_DTCO = read_pkl("models/Tuned_Trained_XGB_Models_DTCO.pickle")

@@ -28,6 +28,17 @@ XGB_7: rmse = 9.80 (108 files) with log_mnemonics = ['RT', 'NPHI'], scaling
 
  Bad!! Using difference to do time series prediction. 20 neighboring wells were used to predict the seleted well. rmse was way to high.
 
+After more comprehensive RandomizedSearchCV:
+
+model_xgb_7:   9.42 (107 wells)
+model_xgb_7_1: 9.37 (107 wells)
+model_xgb_7_2: 9.34 (107 wells)
+model_xgb_6_1: 9.89 (107 wells)
+model_xgb_6_2: 8.81 (107 wells) !!!!!
+model_xgb_3_1: 10.8 (107 wells)
+model_xgb_3_2: 10.6 (107 wells)
+
+
 
 # XGB model tuning
 

@@ -12,7 +12,7 @@ import pandas as pd
 import re
 
 from plot import plot_logs_columns
-from util import read_las, process_las, get_mnemonic, get_alias
+from util import read_las, process_las, get_mnemonic, get_alias, read_pkl
 
 from load_pickle import alias_dict
 
@@ -116,8 +116,16 @@ for ix, WellName, curves_to_remove in temp.itertuples():
                 f"\tNot all {curves_to_remove} are in {WellName} columns. No curves are removed!"
             )
 
+# special for Well_01
+# las_data_TEST = read_pkl("data/leaderboard_1/las_data_TEST.pickle")
+df = las_data_TEST["001-Well_01"]
+df["NPHI"] = df["SPHI_LS"]
+df["NPHI"] = pd.concat(
+    [df["SPHI_LS"][df.index > 7900], df["NPOR_LS"][df.index <= 7900]]
+)
 
-# write las_data
+
+#%% write las_data
 with open(f"{path}/las_data_TEST.pickle", "wb") as f:
     pickle.dump(las_data_TEST, f)
 
