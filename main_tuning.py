@@ -188,13 +188,13 @@ pio.renderers.default = "browser"
 
 mnemonic_dict = {
     # "DTSM" as response
-    '7':   ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    '7_1': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    '7_2': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    '6_1': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "DTSM"],
-    '6_2': ["DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
-    '3_1': ["DTCO", "NPHI", "GR", "DTSM"],
-    '3_2': ["DTCO",  "GR", "RT", "DTSM"],
+    # '7':   ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
+    # '7_1': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
+    # '7_2': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
+    # '6_1': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "DTSM"],
+    # '6_2': ["DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
+    # '3_1': ["DTCO", "NPHI", "GR", "DTSM"],
+    # '3_2': ["DTCO",  "GR", "RT", "DTSM"],
 
     # "DTCO" as response,for well 6 and 8, to fix DTCO
     'DTCO_5': ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTCO"],
@@ -243,7 +243,7 @@ for model_name, target_mnemonics in mnemonic_dict.items():
         n_iter=100,
         scoring="neg_root_mean_squared_error",
         cv=5,
-        verbose=1,
+        verbose=2,
     )
 
     RandCV.fit(X=X_train, y=y_train)    
