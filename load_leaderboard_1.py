@@ -126,8 +126,8 @@ df["NPHI"] = pd.concat(
 
 
 #%% write las_data
-with open(f"{path}/las_data_TEST.pickle", "wb") as f:
-    pickle.dump(las_data_TEST, f)
+# with open(f"{path}/las_data_TEST.pickle", "wb") as f:
+#     pickle.dump(las_data_TEST, f)
 
 print("*" * 90)
 

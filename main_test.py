@@ -89,7 +89,6 @@ def test_predict(
     # print("Selected df_test columns:", df_TEST.columns)
 
     # make sure the column sequence is the same as target_mnemonics
-    df_TEST = df_TEST[target_mnemonics_TEST]
     X_test = df_TEST.values
 
     # just need to get the scaler
@@ -104,7 +103,6 @@ def test_predict(
         return_dict=False,
     )
 
-    Xy = Xy[target_mnemonics_TRAIN]
     scaler_x, scaler_y = RobustScaler(), RobustScaler()
     X_train = scaler_x.fit_transform(Xy.values[:, :-1])
     y_train = scaler_y.fit_transform(Xy.values[:, -1:])
@@ -115,8 +113,8 @@ def test_predict(
         i in Xy.columns[:-1] for i in df_TEST.columns
     ), "Train and test data should have the same column except 'DTSM'!"
 
-    # print(Xy.head())
-    # print(df_TEST.head())
+    # print('Xy:',Xy.head())
+    # print('df_TEST:',df_TEST.head())
 
     # scale test data and predict, and scale back prediction
     X_test = scaler_x.transform(X_test)

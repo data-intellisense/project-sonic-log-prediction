@@ -192,11 +192,12 @@ mnemonic_dict = {
     # '7_2': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
     # '6_1': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "DTSM"],
     # '6_2': ["DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
+    '5_1': ["DTCO", "RHOB", "NPHI", "GR", "PEFZ", "DTSM"],
     # '3_1': ["DTCO", "NPHI", "GR", "DTSM"],
     # '3_2': ["DTCO",  "GR", "RT", "DTSM"],
     # "DTCO" as response,for well 6 and 8, to fix DTCO
-    "DTCO_5": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTCO"],
-    "DTCO_6": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "RT", "DTCO"],
+    # "DTCO_5": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTCO"],
+    # "DTCO_6": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "RT", "DTCO"],
 }
 
 # create a dictionary to save all the models
@@ -216,8 +217,6 @@ for model_name, target_mnemonics in mnemonic_dict.items():
         return_dict=False,
         drop_na=True,
     )
-
-    # print(Xy.sample(10))
 
     scaler_x, scaler_y = RobustScaler(), RobustScaler()
     X_train = scaler_x.fit_transform(Xy.iloc[:, :-1])
@@ -246,18 +245,21 @@ for model_name, target_mnemonics in mnemonic_dict.items():
 
     RandCV.fit(X=X_train, y=y_train)
 
-    model_xgb[f"model_xgb_{model_name}"] = XGB(
+    model_xgb['model'] = XGB(
         **RandCV.best_params_, tree_method="gpu_hist", objective="reg:squarederror"
     )
     # print("best parameters:", RandCV.best_params_)
 
     # retrain the model with best parameters
-    model_xgb[f"model_xgb_{model_name}"].fit(X=X_train, y=y_train)
+    model_xgb['model'].fit(X=X_train, y=y_train)
+
+    model_xgb['scaler_x'] = scaler_x
+    model_xgb['scaler_y'] = scaler_y
+    model_xgb['target_mnemonics'] = target_mnemonics
 
     # save all models to pickle file each iteration, in case of crashes
-    to_pkl(model_xgb, f"predictions/tuning/Tuned_Trained_XGB_Models.pickle")
+    to_pkl(model_xgb, f"predictions/tuning/model_xgb_{model_name}.pickle")
 
 print(f"\nCompleted training and saved all models in {time.time()-time0:.1f} seconds!")
 
-# models=read_pkl(f'predictions/tuning/Tuned_Trained_XGB_Models.pickle' )
-# print(models)
+pprint(read_pkl(f'predictions/tuning/model_xgb_5_1.pickle'))

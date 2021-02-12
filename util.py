@@ -492,12 +492,13 @@ class process_las:
             df_ = pd.DataFrame(df_, columns=df_cols)
             df_.index = df.index
 
+        # take log of 'RT' etc.
         for col in log_mnemonics:
             if col in df_.columns:
                 df_[col] = abs(df_[col]) + 1e-4
                 df_[col] = np.log(df_[col])
-            else:
-                print(f"\t{col} not in columns, no log conversion performed!")
+            # else:
+                # print(f"\t{col} not in columns, no log conversion performed!")
 
         # remove data that's "abnormal"
         mnemonic_range = {
@@ -514,44 +515,24 @@ class process_las:
             if key in df_.columns:
                 df_[key] = df_[key][(df_[key] >= value[0]) & (df_[key] <= value[1])]
 
-        if strict_input_output and (len(target_mnemonics) != len(df_.columns)):
-            # print(
-            #     f"\tNo all target mnemonics are found in df, strict_input_output rule applied, returned None!"
-            # )
-            return None
-
-        elif not strict_input_output and (len(target_mnemonics) != len(df_.columns)):
-            # print(
-            #     f"\tNo all target mnemonics are in df, returned PARTIAL dataframe, none conversion performed!"
-            # )
-            # better to drop all na in all columns
+        # add 'DEPTH' col if requested
+        for col in new_mnemonics:
+            if col == "DEPTH":
+                df_[col] = df_.index            
+        
+        # drop na from the resulting dataframe, do not do it when it's TEST dataset            
+        if drop_na:
+            df_ = df_.dropna(axis=0)
+                        
+        if strict_input_output and all([ i in df_.columns for i in (target_mnemonics + new_mnemonics) ]):
+            # print(f"\tAll target mnemonics are found in df, returned COMPLETE dataframe!")                                    
+            # rearrange mnemonics sequence, required
+            # print (new_mnemonics+target_mnemonics)
+            # print ('df_:', df_)
+            df_ = df_[new_mnemonics+target_mnemonics]
+        
             return df_
-
-        elif strict_input_output and (len(target_mnemonics) == len(df_.columns)):
-            # print(
-            #     f"\tAll target mnemonics are found in df, returned COMPLETE dataframe!"
-            # )
-
-            # add gradient if requested (e.g. NPHI, GR and RHOB), and add 'DEPTH' col if requested
-            for col in new_mnemonics:
-                if col == "DEPTH":
-                    df_[col] = df_.index
-                elif col in df_.columns:
-                    df_[f"d{col}"] = df_[col].diff(periods=1)
-            # drop na from the resulting dataframe, do not do it when it's TEST dataset
-
-            # rerange the columns requence, 'DTSM' always the last columns
-            if ("DTSM" in df_.columns) and ("DTSM" == target_mnemonics[-1]):
-                df_ = df_[list(df_.columns.difference(["DTSM"])) + ["DTSM"]]
-            elif ("DTCO" in df_.columns) and ("DTCO" == target_mnemonics[-1]):
-                df_ = df_[list(df_.columns.difference(["DTCO"])) + ["DTCO"]]
-            else:
-                print("DTSM or DTCO not in dataset, no column rearranging occurred.")
-
-            if drop_na:
-                df_ = df_.dropna(axis=0)
-
-            return df_
+        
         else:
             return None
 

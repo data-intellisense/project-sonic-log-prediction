@@ -84,4 +84,9 @@ d) Coding format
 
 
 
+# .py manual
 
+main.py - build the model then TRAIN the model and predict
+main_evaluate.py - load the already trained model to predict
+mian_test.py - load the already trained model to predict on test data (test data for leaderboard 1, 2 etc...)
+plot.py - plot 
