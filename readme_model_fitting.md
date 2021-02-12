@@ -6,6 +6,9 @@
 * [Curves plotting](#baseline-model)
 * [Model fitting and evaluation](#technologies)
 
+# Baseline estimator
+# Mean: 0.59, MLR: 0.13, RCV: 0.13
+
 ## General info
 
 XGB_7_1: rmse=10.282 (108 files) with sample_weight=None, run in 850 seconds
@@ -39,22 +42,16 @@ model_xgb_3_1: 10.8 (107 wells)
 model_xgb_3_2: 10.6 (107 wells)
 
 
-
 # XGB model tuning
 
 ## target_mnemonics =["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
 ## new_mnomonics = ['DEPTH'] 
 add gradient of ['NPHI', 'GR', 'RHOB'] is not useful
 
-Mean-Model rmse:	0.61
-MLR rmse:	0.13
-RCV rmse:	0.13
-
 
 XGB_7: rmse to beat: 10.06
+KNN_7: rmse = 7 in cv but 11.42 in LOOCV! NOT useful!!!
+
+model_xgb_5_1: rmse= [cv: 0.3195 , LOOCV: 9.15]
 
 
-KNN_7: rmse = 7 in tuning but 11.42 in testing!
-
-
-Should I fix DTCO flat data? Yes! Look at Well 62!
