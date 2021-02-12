@@ -355,4 +355,10 @@ for f in glob.glob("predictions/TEST/*.csv"):
     df_ypred = pd.read_csv(f)
     df_ypred.columns = ["Depth", "DTSM"]
 
-    df_ypred.to_excel(f"predictions/TEST/to_submit/{f_name}.xlsx", index=False)
+    print(f_name)
+    # a = df_ypred['Depth']
+    # b = las_data_TEST['010-Well_10']
+    b = las_data_TEST[f'0{f_name[-2:]}-{f_name}']
+    print(all(df_ypred['Depth']==b.index))
+
+    # df_ypred.to_excel(f"predictions/TEST/to_submit/{f_name}.xlsx", index=False)
