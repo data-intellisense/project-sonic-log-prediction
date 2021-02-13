@@ -413,7 +413,6 @@ class process_las:
         self,
         df=None,
         target_mnemonics=None,
-        new_mnemonics=[],
         log_mnemonics=[],
         strict_input_output=True,
         alias_dict=None,
@@ -427,19 +426,7 @@ class process_las:
         """
         assert alias_dict is not None, "alias_dict is None, assign alias_dict!"
 
-        possible_mnemonics = [
-            "DEPTH",
-            "DTCO",
-            "NPHI",
-            "RHOB",
-            "GR",
-            "CALI",
-            "RT",
-            "PEFZ",
-        ]
-        assert all(
-            [i in possible_mnemonics for i in new_mnemonics]
-        ), f"new_mnemonics should only contain mnemonics in {possible_mnemonics}"
+        possible_new_mnemonics = ["DEPTH"]
 
         df = df.copy()
         # check required parameters
@@ -452,7 +439,10 @@ class process_las:
             assert isinstance(target_mnemonics, list)
             assert len(target_mnemonics) >= 1
             assert all(
-                [i in alias_dict.values() for i in target_mnemonics]
+                [
+                    i in alias_dict.values() or possible_new_mnemonics
+                    for i in target_mnemonics
+                ]
             ), f"Mnemonics should be in the list of {np.unique(list(alias_dict.values()))}"
 
         # find alias in df for target mnemonics
@@ -498,7 +488,7 @@ class process_las:
                 df_[col] = abs(df_[col]) + 1e-4
                 df_[col] = np.log(df_[col])
             # else:
-                # print(f"\t{col} not in columns, no log conversion performed!")
+            # print(f"\t{col} not in columns, no log conversion performed!")
 
         # remove data that's "abnormal"
         mnemonic_range = {
@@ -516,23 +506,18 @@ class process_las:
                 df_[key] = df_[key][(df_[key] >= value[0]) & (df_[key] <= value[1])]
 
         # add 'DEPTH' col if requested
-        for col in new_mnemonics:
-            if col == "DEPTH":
-                df_[col] = df_.index            
-        
-        # drop na from the resulting dataframe, do not do it when it's TEST dataset            
+        if ("DEPTH" in target_mnemonics) and ("DEPTH" not in df_.columns):
+            df_["DEPTH"] = df_.index
+
+        # drop na from the resulting dataframe, do not do it when it's TEST dataset
         if drop_na:
             df_ = df_.dropna(axis=0)
-                        
-        if strict_input_output and all([ i in df_.columns for i in (target_mnemonics + new_mnemonics) ]):
-            # print(f"\tAll target mnemonics are found in df, returned COMPLETE dataframe!")                                    
+
+        if strict_input_output and all([i in df_.columns for i in target_mnemonics]):
+            # print(f"\tAll target mnemonics are found in df, returned COMPLETE dataframe!")
             # rearrange mnemonics sequence, required
-            # print (new_mnemonics+target_mnemonics)
-            # print ('df_:', df_)
-            df_ = df_[new_mnemonics+target_mnemonics]
-        
-            return df_
-        
+            return df_[target_mnemonics]
+
         else:
             return None
 
@@ -540,7 +525,6 @@ class process_las:
         self,
         las_data_dict=None,
         target_mnemonics=None,
-        new_mnemonics=[],
         log_mnemonics=[],
         strict_input_output=True,
         alias_dict=None,
@@ -559,7 +543,6 @@ class process_las:
             df = self.get_df_by_mnemonics(
                 df=df,
                 target_mnemonics=target_mnemonics,
-                new_mnemonics=new_mnemonics,
                 log_mnemonics=log_mnemonics,
                 strict_input_output=strict_input_output,
                 alias_dict=alias_dict,
@@ -604,7 +587,7 @@ class MeanRegressor(BaseEstimator, RegressorMixin):
         return np.ones(len(X_test)) * self.y_bar_
 
 
-#%% Test data
-las_name_test = "001-00a60e5cc262_TGS"
-las_test = "data/las/00a60e5cc262_TGS.las"
-df_test = read_las(las_test).df()
+# #%% Test data
+# las_name_test = "001-00a60e5cc262_TGS"
+# las_test = "data/las/00a60e5cc262_TGS.las"
+# df_test = read_las(las_test).df()

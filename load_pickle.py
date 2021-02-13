@@ -53,7 +53,3 @@ except:
 
 
 test_list = pd.read_csv("data/test_list.csv")
-
-
-model_xgb_DTSM = read_pkl("models/Tuned_Trained_XGB_Models_DTSM.pickle")
-model_xgb_DTCO = read_pkl("models/Tuned_Trained_XGB_Models_DTCO.pickle")

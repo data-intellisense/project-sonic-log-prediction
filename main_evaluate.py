@@ -4,7 +4,7 @@ import pathlib
 import pickle
 import random
 import time
-
+import glob
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -25,8 +25,6 @@ from load_pickle import (
     alias_dict,
     las_depth,
     las_lat_lon,
-    model_xgb_DTSM,
-    model_xgb_DTCO,
     test_list,
 )
 
@@ -42,7 +40,7 @@ from util import (
 
 pio.renderers.default = "browser"
 
-#%%  TEST 2: split train/test among las files (recommended)
+#%% LOOCV
 
 
 def LOOCV_evaluate(
@@ -86,11 +84,10 @@ def LOOCV_evaluate(
     print("models:", models)
     # evaluate the model_dict again 107 las files
     for _, las_name in test_list.itertuples():
-        Xy_test = las_data_DTSM_QC[las_name]
+        Xy_test = las_data_DTSM_QC[las_name].copy()
         Xy_test = process_las().get_df_by_mnemonics(
             df=Xy_test,
             target_mnemonics=target_mnemonics,
-            new_mnemonics=["DEPTH"],
             log_mnemonics=["RT"],
             strict_input_output=True,
             alias_dict=alias_dict,
@@ -165,14 +162,14 @@ def LOOCV_evaluate(
     rmse_all_las = pd.DataFrame(rmse_all_las, columns=["las_name", model_name])
     rmse_all_las.to_csv(f"predictions/{TEST_folder}/rmse_all_las_{model_name}.csv")
 
-    return np.mean(rmse_all_las_temp) # final rmse for all 107 las
+    return np.mean(rmse_all_las_temp)  # final rmse for all 107 las
 
 
 #%%  TEST 2: split train/test among las files (recommended)
 
 # load the model_dict
 model_dict = read_pkl("models/model_xgb_6_2.pickle")
-
+print(model_dict)
 mnemonic_dict = {
     # "DTSM" as response
     # "7": ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
@@ -185,18 +182,14 @@ mnemonic_dict = {
     # "DTCO" as response,for well 6 and 8, to fix DTCO
     # "DTCO_5": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTCO"],
     # "DTCO_6": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "RT", "DTCO"],
-
-    model_dict['model_name']: model_dict['target_mnemonics']
+    model_dict["model_name"]: model_dict["target_mnemonics"]
 }
-
 
 
 for model_name, target_mnemonics in mnemonic_dict.items():
 
     TEST_folder = f"LOOCV_evaluate_{model_name}"
-    models = {
-        f"XGB_{model_name}": model_dict["best_estimator"]
-    }
+    models = {f"XGB_{model_name}": model_dict["best_estimator"]}
 
     # from models.models import models
     time0 = time.time()
@@ -205,17 +198,25 @@ for model_name, target_mnemonics in mnemonic_dict.items():
         target_mnemonics=target_mnemonics,
         models=models,
         scaling=True,
-        scalers=[model_dict['scaler_x'], model_dict['scaler_y']],
+        scalers=[model_dict["scaler_x"], model_dict["scaler_y"]],
         TEST_folder=TEST_folder,
         las_data_DTSM=las_data_DTSM_QC,
         las_lat_lon=las_lat_lon,
         sample_weight_type=None,
     )
 
-    model_dict['rmse_LOOCV'] = rmse_LOOCV
+    model_dict["rmse_LOOCV"] = rmse_LOOCV
 
     # pickle model_dict and save
     to_pkl(model_dict, f"models/model_xgb_{model_name}.pickle")
 
     print(f"Completed training with all models in {time.time()-time0:.1f} seconds!")
     print(f"Prediction results are saved at: predictions/{TEST_folder}")
+
+#%% check out the models
+from pprint 
+for model in glob.glob("models/*.pickle"):
+    print(model)
+    m = read_pkl(model)
+    for k, v in m.items():
+        print(v)
