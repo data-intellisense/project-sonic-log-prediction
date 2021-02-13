@@ -24,20 +24,20 @@ from util import MeanRegressor, process_las, read_pkl, to_pkl
 #%% Batch tuning XGB using RandomizedSearchCV
 
 mnemonic_dict = {
-    '7':   ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    '6_1': ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "DTSM"],
-    '6_2': ["DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
-    '5_1': ["DTCO", "RHOB", "NPHI", "GR", "PEFZ", "DTSM"],
-    '5_2': ["DTCO", "RHOB", "NPHI", "GR", "RT", "DTSM"],    
-    '5_3': ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
-    '4_1': ["DTCO", "RHOB", "NPHI", "GR", "DTSM"],
-    '4_2': ["DTCO", "RHOB", "NPHI", "RT", "DTSM"],
-    '4_3': ["DTCO", "RHOB", "NPHI", "PEFZ", "DTSM"],
-    '3_1': ["DTCO", "NPHI", "GR", "DTSM"],
-    '3_2': ["DTCO", "GR", "RT", "DTSM"],
-    '3_3': ["DTCO", "RHOB", "NPHI", "DTSM"],
-    '2_1': ["DTCO", "NPHI", "DTSM"],
-    '2_2': ["RHOB", "NPHI", "DTSM"],
+    "7": ["DEPTH", "DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
+    "6_1": ["DEPTH", "DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "DTSM"],
+    "6_2": ["DEPTH", "DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
+    "5_1": ["DEPTH", "DTCO", "RHOB", "NPHI", "GR", "PEFZ", "DTSM"],
+    "5_2": ["DEPTH", "DTCO", "RHOB", "NPHI", "GR", "RT", "DTSM"],
+    "5_3": ["DEPTH", "RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
+    "4_1": ["DEPTH", "DTCO", "RHOB", "NPHI", "GR", "DTSM"],
+    "4_2": ["DEPTH", "DTCO", "RHOB", "NPHI", "RT", "DTSM"],
+    "4_3": ["DEPTH", "DTCO", "RHOB", "NPHI", "PEFZ", "DTSM"],
+    "3_1": ["DEPTH", "DTCO", "NPHI", "GR", "DTSM"],
+    "3_2": ["DEPTH", "DTCO", "GR", "RT", "DTSM"],
+    "3_3": ["DEPTH", "DTCO", "RHOB", "NPHI", "DTSM"],
+    "2_1": ["DEPTH", "DTCO", "NPHI", "DTSM"],
+    "2_2": ["DEPTH", "RHOB", "NPHI", "DTSM"],
     # "DTCO" as response,for well 6 and 8, to fix DTCO
     # "DTCO_5": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTCO"],
     # "DTCO_6": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "RT", "DTCO"],
@@ -50,10 +50,10 @@ time0 = time.time()
 
 for model_name, target_mnemonics in mnemonic_dict.items():
 
+    # train_test_split among depth rows
     Xy = process_las().get_compiled_df_from_las_dict(
         las_data_dict=las_data_DTSM_QC,
         target_mnemonics=target_mnemonics,
-        new_mnemonics=["DEPTH"],
         log_mnemonics=["RT"],
         strict_input_output=True,
         alias_dict=alias_dict,
@@ -66,16 +66,20 @@ for model_name, target_mnemonics in mnemonic_dict.items():
     y_train = scaler_y.fit_transform(Xy.iloc[:, -1:])
 
     # Baseline model, y_mean and linear regression
-    models_baseline = {"Mean": MeanRegressor(), "MLR": LinearRegression(), "RCV": RidgeCV()}
+    models_baseline = {
+        "Mean": MeanRegressor(),
+        "MLR": LinearRegression(),
+        "RCV": RidgeCV(),
+    }
 
     for model_name_, model in models_baseline.items():
         scores = cross_val_score(
             model, X_train, y_train, cv=5, scoring="neg_mean_squared_error"
         )
         print(f"{model_name_} rmse:\t{-np.mean(scores):.2f}")
-        model_dict[f'rmse_{model_name_}'] = -np.mean(scores)
-        if model_name_=='MLR':
-            model_dict[f'estimator_{model_name_}'] = model
+        model_dict[f"rmse_{model_name_}"] = -np.mean(scores)
+        if model_name_ == "MLR":
+            model_dict[f"estimator_{model_name_}"] = model
 
     # RandomizedSearchCV to find best hyperparameter combination
     param_distributions = {
@@ -89,7 +93,9 @@ for model_name, target_mnemonics in mnemonic_dict.items():
     }
 
     RandCV = RandomizedSearchCV(
-        estimator=XGB(tree_method="gpu_hist", objective="reg:squarederror", random_state=42),
+        estimator=XGB(
+            tree_method="gpu_hist", objective="reg:squarederror", random_state=42
+        ),
         param_distributions=param_distributions,
         n_iter=150,
         scoring="neg_root_mean_squared_error",
@@ -98,23 +104,23 @@ for model_name, target_mnemonics in mnemonic_dict.items():
         verbose=2,
     )
 
-    RandCV.fit(X=X_train, y=y_train)   
+    RandCV.fit(X=X_train, y=y_train)
 
     # save all the results
-    model_dict['model_name'] = model_name
-    model_dict['best_estimator'] = RandCV.best_estimator_
-    model_dict['target_mnemonics'] = list(Xy.columns.values) # with new mnemonics
-    model_dict['scaler_x'] = scaler_x
-    model_dict['scaler_y'] = scaler_y    
-    model_dict['rmse_CV'] = -RandCV.best_score_
-    
+    model_dict["model_name"] = model_name
+    model_dict["best_estimator"] = RandCV.best_estimator_
+    model_dict["target_mnemonics"] = list(Xy.columns.values)  # with new mnemonics
+    model_dict["scaler_x"] = scaler_x
+    model_dict["scaler_y"] = scaler_y
+    model_dict["rmse_CV"] = -RandCV.best_score_
+
     # save all models to pickle file during each iteration, for later prediction
     to_pkl(model_dict, f"predictions/tuning/model_xgb_{model_name}.pickle")
 
     print(f"\nCompleted training and saved model in {time.time()-time0:.1f} seconds!")
 
     # first, get the best_estimator
-    best_estimator = model_dict['best_estimator']
+    best_estimator = model_dict["best_estimator"]
 
     # get the feature_importance data
     xgb_feature_importance = [round(i, 3) for i in best_estimator.feature_importances_]
@@ -129,21 +135,23 @@ for model_name, target_mnemonics in mnemonic_dict.items():
     )
 
     # plot feature_importance bar
-    fig = px.bar(xgb_feature_importance_df, x="feature", y="importance", width=1600, height=900)
+    fig = px.bar(
+        xgb_feature_importance_df, x="feature", y="importance", width=1600, height=900
+    )
     fig.write_image(f"readme_resources/xgb_{model_name}_feature_importance.png")
 
-    # calculate y_pred, plot crossplot pred vs true        
-    y_predict = best_estimator.predict(X_train).reshape(-1,1)
+    # calculate y_pred, plot crossplot pred vs true
+    y_predict = best_estimator.predict(X_train).reshape(-1, 1)
 
     plot_crossplot(
-        y_actual=scaler_y.inverse_transform(y_train).reshape(-1,1),
-        y_predict=scaler_y.inverse_transform(y_predict).reshape(-1,1),
+        y_actual=scaler_y.inverse_transform(y_train).reshape(-1, 1),
+        y_predict=scaler_y.inverse_transform(y_predict).reshape(-1, 1),
         text=None,
         axis_range=300,
         include_diagnal_line=True,
         plot_show=False,
         plot_return=False,
-        plot_save_file_name=f'XGB_{model_name} tuning cross plot',
-        plot_save_path='predictions/tuning',
-        plot_save_format= ["png"],
+        plot_save_file_name=f"XGB_{model_name} tuning cross plot",
+        plot_save_path="predictions/tuning",
+        plot_save_format=["png"],
     )

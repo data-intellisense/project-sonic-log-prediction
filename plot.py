@@ -34,6 +34,7 @@ def plot_wells_3D(
     num_of_neighbors=5,
     vertical_anisotropy=0.1,
     depth_range_weight=0.1,
+    title=None,
     plot_show=True,
     plot_return=False,
     plot_save_file_name=None,
@@ -45,7 +46,12 @@ def plot_wells_3D(
     assert isinstance(las_depth, dict)
     assert all([las_name_test in las_depth.keys()])
 
-    title = f"Wellbore Visualization | Test well shown as the center well | {num_of_neighbors} neighbor wells shown"
+    if title is None:
+        title = f"Wellbore Visualization | Test well shown as the center well | {num_of_neighbors} neighbor wells shown"
+    else:
+        title = (
+            f"Wellbore Visualization {title} | {num_of_neighbors} neighbor wells shown"
+        )
 
     fig = go.Figure()
 
@@ -144,8 +150,8 @@ def plot_wells_3D(
     fig.update_layout(
         scene_camera=dict(eye=dict(x=2, y=0, z=0.0)),
         template="plotly_dark",
-        height=1300,
-        width=1300,
+        width=2500,
+        height=1200,
         paper_bgcolor="#000000",
         plot_bgcolor="#000000",
         title=dict(
@@ -198,6 +204,8 @@ def plot_wells_3D(
             plot_save_file_name = f"wellbore_3D_{num_of_neighbors}_neighbors"
 
         if plot_save_path is not None:
+            if not os.path.exists(plot_save_path):
+                os.mkdir(plot_save_path)
             plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
             # print(f"\nPlots are saved at path: {plot_save_path}!")
         else:
@@ -267,6 +275,8 @@ def plot_logs(
             plot_save_file_name = f"plot-{str(np.random.random())[2:]}"
 
         if plot_save_path is not None:
+            if not os.path.exists(plot_save_path):
+                os.mkdir(plot_save_path)
             plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
             # print(f"\nPlots are saved at path: {plot_save_path}!")
         else:
@@ -403,10 +413,9 @@ def plot_logs_columns(
             plot_save_file_name = f"plot-{str(np.random.random())[2:]}"
 
         if plot_save_path is not None:
-            if plot_save_path is not None:
 
-                if not os.path.exists(plot_save_path):
-                    os.mkdir(plot_save_path)
+            if not os.path.exists(plot_save_path):
+                os.mkdir(plot_save_path)
 
             plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
             # print(f"\nPlots are saved at path: {plot_save_path}!")

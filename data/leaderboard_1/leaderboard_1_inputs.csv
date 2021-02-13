@@ -1,5 +1,5 @@
 ﻿WellName,Curves to remove,Comments,Features,Models
-001-Well_01,"DTRP, TNPH_LS, TNPH_SS, GRD, HLLD, HLLS, LLS, MSFL, RXOZ, HCALR_1, HCALR","7900 mark,  SPHI_LS (replace NPHI with this if using raw file)","7features+[DTCO, GR, NPHI]","model_xgb_7, model_xgb_3_1"
+001-Well_01,"DTRP, TNPH_LS, TNPH_SS, NPOR_LS, GRS, HLLD, HLLS, LLS, MSFL, RXOZ, HCALR_1, HCALR","7900 mark,  SPHI_LS (replace NPHI with this if using raw file)","7features+[DTCO, GR, NPHI]","model_xgb_7, model_xgb_3_1"
 002-Well_02,"LLS, MSFL",,7features,model_xgb_7 
 003-Well_03,"AT10, AT30, GR",,7features,model_xgb_7 
 004-Well_04,"RHOZ, ILD, SFLU, HCALD, PEFZ","Missing DTCO around 16k, PEFZ all nan",6features [~PEFZ],model_xgb_6_1

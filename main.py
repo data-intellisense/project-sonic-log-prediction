@@ -66,16 +66,15 @@ def LOOCV(
     if not os.path.exists(f"predictions/{TEST_folder}"):
         os.mkdir(f"predictions/{TEST_folder}")
 
-    target_mnemonics = target_mnemonics + ["DTSM"]
+    target_mnemonics = ["DEPTH"] + target_mnemonics + ["DTSM"]
 
     las_dict = process_las().get_compiled_df_from_las_dict(
         las_data_dict=las_data_DTSM_QC,
         target_mnemonics=target_mnemonics,
-        new_mnemonics=['DEPTH'],
         log_mnemonics=["RT"],
-        strict_input_output=True,        
-        alias_dict=alias_dict,  
-        drop_na=True,              
+        strict_input_output=True,
+        alias_dict=alias_dict,
+        drop_na=True,
         return_dict=True,
     )
 

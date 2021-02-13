@@ -52,4 +52,10 @@ except:
     las_data_TEST = None
 
 
+try:
+    las_depth_TEST = read_pkl(f"data/leaderboard_1/las_depth_TEST.pickle")
+except:
+    print("No 'las_depth_TEST' loaded as it is NOT available!")
+    las_depth_TEST = None
+
 test_list = pd.read_csv("data/test_list.csv")

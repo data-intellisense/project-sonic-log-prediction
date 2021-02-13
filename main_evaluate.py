@@ -167,27 +167,18 @@ def LOOCV_evaluate(
 
 #%%  TEST 2: split train/test among las files (recommended)
 
-# load the model_dict
-model_dict = read_pkl("models/model_xgb_6_2.pickle")
-print(model_dict)
-mnemonic_dict = {
-    # "DTSM" as response
-    # "7": ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    # "7_1": ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    # "7_2": ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    # "6_1": ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "DTSM"],
-    # "6_2": ["DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
-    # "3_1": ["DTCO", "NPHI", "GR", "DTSM"],
-    # "3_2": ["DTCO", "GR", "RT", "DTSM"],
-    # "DTCO" as response,for well 6 and 8, to fix DTCO
-    # "DTCO_5": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTCO"],
-    # "DTCO_6": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "RT", "DTCO"],
-    model_dict["model_name"]: model_dict["target_mnemonics"]
-}
 
+for model in glob.glob("models/*.pickle"):
 
-for model_name, target_mnemonics in mnemonic_dict.items():
+    # load the model_dict
+    model_dict = read_pkl(model)
 
+    print(
+        model_dict["model_name"], model_dict["target_mnemonics"], model_dict["rmse_CV"]
+    )
+    print("\n")
+
+    model_name = model_dict["model_name"]
     TEST_folder = f"LOOCV_evaluate_{model_name}"
     models = {f"XGB_{model_name}": model_dict["best_estimator"]}
 
@@ -195,7 +186,7 @@ for model_name, target_mnemonics in mnemonic_dict.items():
     time0 = time.time()
 
     rmse_LOOCV = LOOCV_evaluate(
-        target_mnemonics=target_mnemonics,
+        target_mnemonics=model_dict["target_mnemonics"],
         models=models,
         scaling=True,
         scalers=[model_dict["scaler_x"], model_dict["scaler_y"]],
@@ -205,18 +196,29 @@ for model_name, target_mnemonics in mnemonic_dict.items():
         sample_weight_type=None,
     )
 
+    # update the model_dict with rmse_LOOCV and save it!
     model_dict["rmse_LOOCV"] = rmse_LOOCV
-
-    # pickle model_dict and save
     to_pkl(model_dict, f"models/model_xgb_{model_name}.pickle")
 
     print(f"Completed training with all models in {time.time()-time0:.1f} seconds!")
     print(f"Prediction results are saved at: predictions/{TEST_folder}")
 
 #%% check out the models
-from pprint 
+
+temp = []
 for model in glob.glob("models/*.pickle"):
-    print(model)
-    m = read_pkl(model)
-    for k, v in m.items():
-        print(v)
+
+    # load the model_dict
+    model_dict = read_pkl(model)
+    temp.append(
+        [
+            model_dict["model_name"],
+            model_dict["rmse_LOOCV"],
+            model_dict["rmse_CV"],
+            model_dict["target_mnemonics"],
+        ]
+    )
+
+print("\n")
+temp = pd.DataFrame(temp, columns=["model_name", "rmse_LOOCV", "rmse_CV", "mnemonics"])
+print(temp.sort_values(by=["rmse_LOOCV"], ascending=True))

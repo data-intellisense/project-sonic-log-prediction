@@ -17,8 +17,8 @@ from util import read_las, process_las, get_mnemonic, get_alias, read_pkl
 from load_pickle import alias_dict
 
 # modify alias_dict
-alias_dict_test = dict(alias_dict, **dict(SPHI_LS="NPHI"))
-alias_dict_test["SPHI_LS"]
+alias_dict_test = alias_dict  # dict(alias_dict)  # , **dict(SPHI_LS="NPHI"))
+# alias_dict_test["SPHI_LS"]
 
 #%% read all las files to df, keep all and valid DTSM only, and store to pickle file format
 
@@ -63,17 +63,26 @@ for f in glob.glob(f"{path}/*.las"):
 test_file_list = pd.DataFrame(test_file_list, columns=["WellName"])
 test_file_list.to_csv(f"{path}/test_file_list.csv")
 
-# write las_data
-with open(f"{path}/las_data.pickle", "wb") as f:
-    pickle.dump(las_data, f)
-
 # write las_lat_lon
 with open(f"{path}/las_lat_lon.pickle", "wb") as f:
     pickle.dump(las_lat_lon, f)
 
-print(f"\nSuccessfully loaded total {count_+1} las files!")
-print(f"Total run time: {time.time()-time_start: .2f} seconds")
 
+# special case for Well_01
+# las_data_TEST = read_pkl("data/leaderboard_1/las_data_TEST.pickle")
+df = las_data["001-Well_01"]
+df["NPHI"] = pd.concat(
+    [df["SPHI_LS"][df.index > 7900], df["NPOR_LS"][df.index <= 7900]]
+)
+df["GRD"] = pd.concat([df["GRS"][df.index > 7900], df["GRD"][df.index <= 7900]])
+
+# write las_data
+with open(f"{path}/las_data.pickle", "wb") as f:
+    pickle.dump(las_data, f)
+
+
+print(f"\nSuccessfully loaded total {len(las_data)} las files!")
+print(f"Total run time: {time.time()-time_start: .2f} seconds")
 
 #%% pick curves
 
@@ -116,14 +125,17 @@ for ix, WellName, curves_to_remove in temp.itertuples():
                 f"\tNot all {curves_to_remove} are in {WellName} columns. No curves are removed!"
             )
 
-# special for Well_01
-# las_data_TEST = read_pkl("data/leaderboard_1/las_data_TEST.pickle")
-df = las_data_TEST["001-Well_01"]
-df["NPHI"] = df["SPHI_LS"]
-df["NPHI"] = pd.concat(
-    [df["SPHI_LS"][df.index > 7900], df["NPOR_LS"][df.index <= 7900]]
-)
 
+#%% add las_depth_TEST
+las_depth_TEST = dict()
+
+for key, df in las_data_TEST.items():
+
+    las_depth_TEST[key] = [df.index.min(), df.index.max()]
+
+# write las_depth_TEST
+with open("data/leaderboard_1/las_depth_TEST.pickle", "wb") as f:
+    pickle.dump(las_depth_TEST, f)
 
 #%% write las_data
 # with open(f"{path}/las_data_TEST.pickle", "wb") as f:
@@ -133,7 +145,7 @@ print("*" * 90)
 
 for key in las_data_TEST.keys():
     plot_logs_columns(
-        las_data_TEST[key],
+        df=las_data_TEST[key],
         well_name=f"{key}-test-data",
         plot_show=False,
         plot_save_file_name=f"{key}-test-data",
@@ -143,13 +155,13 @@ for key in las_data_TEST.keys():
     )
 
 
-for key in las_data_TEST.keys():
-    plot_logs_columns(
-        las_data_TEST[key],
-        well_name=f"{key}-test-data",
-        plot_show=False,
-        plot_save_file_name=f"{key}-test-data",
-        plot_save_path=path,
-        plot_save_format=["png", "html"],
-        alias_dict=alias_dict_test,
-    )
+# for key in las_data_TEST.keys():
+#     plot_logs_columns(
+#         las_data_TEST[key],
+#         well_name=f"{key}-test-data",
+#         plot_show=False,
+#         plot_save_file_name=f"{key}-test-data",
+#         plot_save_path=path,
+#         plot_save_format=["png", "html"],
+#         alias_dict=alias_dict_test,
+#     )
