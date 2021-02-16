@@ -8,15 +8,161 @@ import plotly.graph_objects as go
 import plotly.io as pio
 
 from util import get_mnemonic, get_alias, read_las, process_las
-from plot import plot_logs_columns, plot_crossplot
+from plot import plot_logs_columns, plot_crossplot, plot_outliers
 from sklearn.neighbors import LocalOutlierFactor
 from itertools import product
+from sklearn.linear_model import LinearRegression as MLR
 
 pio.renderers.default = "browser"
 
 from load_pickle import alias_dict, las_data_DTSM_QC
 
-# las_data_DTSM['000-0052442d0162_TGS']
+#%% detect and display outliers
+
+from sklearn.covariance import EllipticEnvelope
+
+
+def detect_display_outliers(
+    df=None, display=False, path=None, las_name=None, alias_dict=None
+):
+
+    outlier_detector = EllipticEnvelope(contamination=0.01)
+    try:
+        labels = outlier_detector.fit_predict(df[["DTCO", "DTSM"]])
+    except:
+        labels = outlier_detector.fit_predict(df)
+
+    if display:
+
+        df_inliners = df[labels == 1]
+        df_outliers = df[["DEPTH", "DTSM"]][labels == -1].copy()
+        df_outliers.columns = ["Depth", "DTSM_Pred"]
+
+        plot_logs_columns(
+            df=df_inliners,
+            DTSM_pred=df_outliers,
+            well_name=las_name,
+            plot_show=False,
+            plot_save_file_name=las_name,
+            plot_save_format=["png"],
+            plot_save_path=path,
+            alias_dict=alias_dict,
+        )
+
+    return labels
+
+
+for las_name, df in las_data_DTSM_QC.items():
+    mnemonics_3 = [
+        "DEPTH",
+        "DTCO",
+        "DTSM",
+    ]
+
+    df = process_las().get_df_by_mnemonics(
+        df=df,
+        target_mnemonics=mnemonics_3,
+        alias_dict=alias_dict,
+        strict_input_output=False,
+    )
+    detect_display_outliers(
+        df=df,
+        display=True,
+        path="plots/outliers",
+        las_name=las_name,
+        alias_dict=alias_dict,
+    )
+
+#%% remove outliers like well 001
+
+
+df = las_data_DTSM_QC["001-00a60e5cc262_TGS"].copy()
+mnemonics_7 = [
+    "DEPTH",
+    "DTCO",
+    "RHOB",
+    "NPHI",
+    "GR",
+    "RT",
+    "CALI",
+    "PEFZ",
+    "DTSM",
+]
+
+df = process_las().get_df_by_mnemonics(
+    df=df,
+    target_mnemonics=mnemonics_7,
+    alias_dict=alias_dict,
+    strict_input_output=False,
+)
+df
+
+plot_logs_columns(df, alias_dict=alias_dict, plot_show=True)
+
+X = df["DTCO"].values.reshape(-1, 1)
+y_true = df["DTSM"].values.reshape(-1, 1)
+reg = MLR()
+reg.fit(X, y_true)
+y_pred = reg.predict(X).reshape(-1, 1)
+
+# plot_crossplot(y_actual=y_true, y_predict=y_pred, include_diagnal_line=True)
+
+#%% oneclass SVM
+from plot import plot_logs_columns, plot_crossplot, plot_outliers
+from sklearn.svm import OneClassSVM
+from sklearn.ensemble import IsolationForest
+from sklearn.covariance import EllipticEnvelope
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.linear_model import HuberRegressor
+
+# outlier_detector = OneClassSVM(kernel="linear", nu=0.3)
+# outlier_detector = IsolationForest(contamination=0.05)
+outlier_detector = EllipticEnvelope(contamination=0.03)
+# outlier_detector = LocalOutlierFactor(n_neighbors=10)
+
+labels = outlier_detector.fit_predict(df[["DTCO", "DTSM"]])
+
+y = np.c_[y_true, y_pred, labels]
+inliners = y[y[:, -1] == 1]
+outliers = y[y[:, -1] == -1]
+
+# plot_crossplot(
+#     y_actual=inliners[:, 0], y_predict=inliners[:, 1], include_diagnal_line=True
+# )
+# plot_crossplot(
+#     y_actual=outliers[:, 0], y_predict=outliers[:, 1], include_diagnal_line=True
+# )
+
+df_outliers = df[["DTSM"]][y[:, -1] == -1].copy()
+df_outliers["Depth"] = df_outliers.index
+df_outliers.columns = ["DTSM_Pred", "Depth"]
+
+plot_logs_columns(
+    df=df[y[:, -1] == 1],
+    DTSM_pred=df_outliers,
+    alias_dict=alias_dict,
+    plot_show=True,
+)
+# plot_logs_columns(df[y[:, -1] == -1], alias_dict=alias_dict, plot_show=True)
+
+#%% remove outlier through regression
+from plot import plot_outliers
+from sklearn.linear_model import HuberRegressor, LinearRegression
+
+Xy = pd.DataFrame(
+    np.c_[X.reshape(-1, 1), y_true.reshape(-1, 1)], columns=["DTCO", "DTSM"]
+)
+
+estimator = HuberRegressor()  # estimator = LinearRegression()
+estimator.fit(X, y_true)
+
+x1 = np.arange(300).reshape(-1, 1)
+y1 = estimator.predict(x1)
+abline = pd.DataFrame(np.c_[x1, y1], columns=["DTCO", "DTSM"])
+
+Xy_out = Xy[labels == -1]
+
+plot_outliers(Xy=Xy, Xy_out=Xy_out, abline=abline, axis_range=200, plot_show=True)
 
 #%% plot all las
 
@@ -443,5 +589,33 @@ for WellTEST in las_depth_TEST.keys():
         plot_return=False,
         plot_save_file_name=WellTEST,
         plot_save_path="plots/TEST",
+        plot_save_format=["html", "png"],
+    )
+
+
+#%% plot TEST well 2 relative location
+
+from load_pickle import las_depth, las_lat_lon
+from util import read_pkl
+from plot import plot_wells_3D
+
+path = "data/leaderboard_3"
+
+las_depth_TEST = read_pkl(f"{path}/las_depth_TEST.pickle")
+las_lat_lon_TEST = read_pkl(f"{path}/las_lat_lon_TEST.pickle")
+
+for WellTEST in las_depth_TEST.keys():
+    plot_wells_3D(
+        las_name_test=WellTEST,
+        las_depth=dict(**las_depth, **las_depth_TEST),
+        las_lat_lon=dict(**las_lat_lon, **las_lat_lon_TEST),
+        num_of_neighbors=1,
+        vertical_anisotropy=0.1,
+        depth_range_weight=0.1,
+        title=WellTEST,
+        plot_show=True,
+        plot_return=False,
+        plot_save_file_name=WellTEST,
+        plot_save_path="plots/TEST_3",
         plot_save_format=["html", "png"],
     )

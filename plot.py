@@ -9,7 +9,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.subplots import make_subplots
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 
 from util import (
     get_alias,
@@ -377,6 +377,7 @@ def plot_logs_columns(
             go.Scatter(
                 x=DTSM_pred["DTSM_Pred"],
                 y=DTSM_pred["Depth"],
+                mode="lines+markers",
                 line_color="rgba(255, 0, 0, .7)",
                 name="DTSM_Pred",
             ),
@@ -452,6 +453,7 @@ def plot_crossplot(
 
     assert len(y_actual) == len(y_predict)
     rmse_test = mean_squared_error(y_actual, y_predict) ** 0.5
+    r2_test = r2_score(y_actual, y_predict)
 
     y_pred_act = pd.DataFrame(
         np.c_[y_actual.reshape(-1, 1), y_predict.reshape(-1, 1)],
@@ -465,9 +467,9 @@ def plot_crossplot(
     )
 
     if text is not None:
-        title_text = f"{text}, rmse_test:{rmse_test:.2f}"
+        title_text = f"{text}, rmse_test:{rmse_test:.2f}, r2_score: {r2_test:.2f}"
     else:
-        title_text = f"rmse_test:{rmse_test:.2f}"
+        title_text = f"rmse_test:{rmse_test:.2f}, r2_score: {r2_test:.2f}"
 
     fig = px.scatter(y_pred_act, x="Actual", y="Predict")
 
@@ -536,6 +538,80 @@ def plot_cords(
         yaxis=dict(title="Latitude"),
         # title = dict(text='Size: Stop Depth'),
         font=dict(size=18),
+    )
+
+    # show and save plot
+    if plot_show:
+        fig.show()
+
+    # save the figure if plot_save_format is provided
+    if plot_save_format is not None:
+
+        if plot_save_file_name is None:
+            plot_save_file_name = f"plot-{str(np.random.random())[2:]}"
+
+        if plot_save_path is not None:
+            if not os.path.exists(plot_save_path):
+                os.mkdir(plot_save_path)
+
+            plot_save_file_name = f"{plot_save_path}/{plot_save_file_name}"
+            # print(f"\nPlots are saved at path: {plot_save_path}!")
+        else:
+            pass
+            # print(f"\nPlots are saved at the same path as current script!")
+
+        for fmt in plot_save_format:
+
+            plot_file_name_ = f"{plot_save_file_name}.{fmt}"
+
+            if fmt in ["png"]:
+                fig.write_image(plot_file_name_)
+            if fmt in ["html"]:
+                fig.write_html(plot_file_name_)
+
+    if plot_return:
+        return fig
+
+
+def plot_outliers(
+    Xy=None,
+    Xy_out=None,
+    abline=None,
+    text=None,
+    axis_range=300,
+    plot_show=True,
+    plot_return=False,
+    plot_save_file_name=None,
+    plot_save_path=None,
+    plot_save_format=None,
+):
+
+    if text is not None:
+        title_text = f"{text}"
+    else:
+        title_text = "Outliers"
+
+    if Xy is not None:
+        fig = px.scatter(Xy, x="DTCO", y="DTSM")
+    else:
+        fig = go.Figure()
+
+    if Xy_out is not None:
+        fig.add_traces(
+            px.scatter(
+                Xy_out, x="DTCO", y="DTSM", color_discrete_sequence=["red"]
+            ).data[0],
+        )
+
+    if abline is not None:
+        fig.add_traces(px.line(abline, x="DTCO", y="DTSM").data[0])
+
+    fig.update_layout(
+        title=dict(text=title_text),
+        width=1200,
+        height=1200,
+        xaxis_range=[0, axis_range],
+        yaxis_range=[0, axis_range],
     )
 
     # show and save plot

@@ -1,0 +1,35 @@
+# model 5_1 seems perform the best rmse = 8.998282 with objective=reg:squarederror, rmse=9.317543 when using objective=reg:pseudohubererror
+
+model_name  rmse_LOOCV   rmse_CV  \
+8         5_1    8.998282  0.319163   
+10        5_2    9.215294  0.315821   
+13        6_2    9.225768  0.321294   
+6         4_2    9.239068  0.321252   
+9         5_1    9.317543  0.320540   
+14          7    9.477450  0.305593   
+5         4_1    9.512196  0.328338   
+7         4_3    9.634093  0.321259   
+4         3_3    9.681149  0.336076   
+12        6_1    9.952092  0.317828   
+3         3_2   10.877614  0.343984   
+2         3_1   11.066525  0.430885   
+0         2_1   11.379237  0.430118   
+11        5_3   11.938490  0.426800   
+1         2_2   14.395873  0.465363   
+
+                                            mnemonics  
+8           [DEPTH, DTCO, RHOB, NPHI, GR, PEFZ, DTSM]  
+10            [DEPTH, DTCO, RHOB, NPHI, GR, RT, DTSM]  
+13    [DEPTH, DTCO, RHOB, NPHI, GR, CALI, PEFZ, DTSM]  
+6                 [DEPTH, DTCO, RHOB, NPHI, RT, DTSM]  
+9           [DEPTH, DTCO, RHOB, NPHI, GR, PEFZ, DTSM]  
+14  [DEPTH, DTCO, RHOB, NPHI, GR, RT, CALI, PEFZ, ...  
+5                 [DEPTH, DTCO, RHOB, NPHI, GR, DTSM]  
+7               [DEPTH, DTCO, RHOB, NPHI, PEFZ, DTSM]  
+4                     [DEPTH, DTCO, RHOB, NPHI, DTSM]  
+12      [DEPTH, DTCO, RHOB, NPHI, GR, RT, CALI, DTSM]  
+3                         [DEPTH, DTCO, GR, RT, DTSM]  
+2                       [DEPTH, DTCO, NPHI, GR, DTSM]  
+0                           [DEPTH, DTCO, NPHI, DTSM]  
+11          [DEPTH, RHOB, NPHI, GR, CALI, PEFZ, DTSM]  
+1                           [DEPTH, RHOB, NPHI, DTSM]  

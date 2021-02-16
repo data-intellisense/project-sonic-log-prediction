@@ -9,10 +9,12 @@ import pandas as pd
 
 from sklearn.preprocessing import MinMaxScaler
 from scipy.signal import medfilt
+from scipy.ndimage import median_filter
 from sklearn.base import clone
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import KFold
 from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.covariance import EllipticEnvelope
 
 
 def to_pkl(data, path):
@@ -294,6 +296,24 @@ def get_sample_weight2_TEST(
     return sample_weight
 
 
+class CustomCrossValidation:
+    def __init__(self, n_splits=5, las_index=None):
+        assert las_index is not None, "please provide las_index"
+        self.n_splits = n_splits
+        self.las_index = las_index
+
+    def split(self, X, y, groups=None):
+        assert all([len(X) == len(y), len(X) == len(self.las_index)])
+        self.X = X.copy()
+        self.y = y.copy()
+
+        self.X["las_index"] = self.las_index
+        las_index_unique = np.unique(self.las_index)
+        self.test_index_ = np.random.choice(
+            las_index_unique, size=len(las_index_unique) // self.n_splits, replace=False
+        )
+
+
 def CV_weighted(model, X, y, weights=None, cv=10):
     """
     model : a sci-kit learn estimator
@@ -350,12 +370,12 @@ class process_las:
                     c[n] = c[n] + "_" + str(m)
         return c
 
-    def despike(self, df=None, cols=None, window_size=5):
+    def despike(self, df=None, cols=None, size=21):
         """
         df should be a dataframe, will despike all or selected columns
         """
         assert isinstance(df, pd.DataFrame)
-        assert window_size % 2 == 1, "Median filter window size must be odd."
+        assert size % 2 == 1, "Median filter window size must be odd."
 
         if cols is not None:
             assert isinstance(cols, list), "cols should be a list columns names of df"
@@ -366,7 +386,7 @@ class process_las:
             cols = df.columns
 
         for col in cols:
-            df[col] = medfilt(df[col].values, kernel_size=window_size)
+            df[col] = median_filter(df[col].values, size=size, mode="nearest")
 
         return df
 
@@ -409,12 +429,23 @@ class process_las:
 
         return df
 
+    def detect_outliers(self, df=None, contamination=0.01):
+
+        outlier_detector = EllipticEnvelope(contamination=contamination)
+        try:
+            labels = outlier_detector.fit_predict(df[["DTCO", "DTSM"]])
+        except:
+            labels = outlier_detector.fit_predict(df)
+
+        return labels
+
     def get_df_by_mnemonics(
         self,
         df=None,
         target_mnemonics=None,
         log_mnemonics=[],
         strict_input_output=True,
+        outliers_contamination=None,
         alias_dict=None,
         drop_na=True,
     ):
@@ -495,7 +526,7 @@ class process_las:
             "DTSM": [60, 250],
             "DTCO": [10, 200],
             "GR": [0, 290],
-            "NPHI": [0, 0.6],
+            "NPHI": [-0.3, 0.6],
             "PEFZ": [0, 11],
             "RHOB": [1, 3.2],
             "CALI": [0, 25],
@@ -511,13 +542,31 @@ class process_las:
 
         # drop na from the resulting dataframe, do not do it when it's TEST dataset
         if drop_na:
-            df_ = df_.dropna(axis=0)
+            df_ = df_.dropna(axis=0)  # subset=["DTSM"],
+
+        # smooth/despike the logs
+        df_ = self.despike(df_)
+
+        # # outliers == -1, inliners==1
+        # if outliers_contamination is not None and len(df_) > 1 and df_ is not None:
+        #     df_ = df_[
+        #         self.detect_outliers(df=df_, contamination=outliers_contamination) == 1
+        #     ]
+
+        # replace outliers with interpolated values
+        # outliers == -1, inliners==1
+        if outliers_contamination is not None and len(df_) > 1 and df_ is not None:
+            df_ = df_[
+                self.detect_outliers(df=df_, contamination=outliers_contamination) == 1
+            ]
 
         if strict_input_output and all([i in df_.columns for i in target_mnemonics]):
             # print(f"\tAll target mnemonics are found in df, returned COMPLETE dataframe!")
             # rearrange mnemonics sequence, required
             return df_[target_mnemonics]
 
+        elif not strict_input_output:
+            return df_
         else:
             return None
 
@@ -527,6 +576,7 @@ class process_las:
         target_mnemonics=None,
         log_mnemonics=[],
         strict_input_output=True,
+        outliers_contamination=False,
         alias_dict=None,
         drop_na=True,
         return_dict=False,
@@ -538,13 +588,14 @@ class process_las:
             print(f"Loading {key}")
             df = las_data_dict[key]
 
-            df = self.despike(df, window_size=5)
+            df = self.despike(df)
 
             df = self.get_df_by_mnemonics(
                 df=df,
                 target_mnemonics=target_mnemonics,
                 log_mnemonics=log_mnemonics,
                 strict_input_output=strict_input_output,
+                outliers_contamination=outliers_contamination,
                 alias_dict=alias_dict,
                 drop_na=drop_na,
             )

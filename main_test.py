@@ -50,6 +50,7 @@ pio.renderers.default = "browser"
 def test_predict(
     target_mnemonics=None,
     model=None,
+    scalers=None,
     df_TEST=None,
     las_data_DTSM=None,
     lat_lon_TEST=None,
@@ -57,69 +58,42 @@ def test_predict(
     sample_weight_type=None,
     TEST_folder=None,
 ):
-    TEST_folder = f"predictions/{TEST_folder}"
+
+    # start counting time
+    time0 = time.time()
     if not os.path.exists(TEST_folder):
         os.mkdir(TEST_folder)
 
     # Do NOT include 'DTSM'!!
-    target_mnemonics_TEST = target_mnemonics
-    target_mnemonics_TRAIN = target_mnemonics + ["DTSM"]
-
-    time0 = time.time()
+    target_mnemonics_TEST = [i for i in target_mnemonics if i != "DTSM"]
+    print(
+        "\ntarget_mnemonics:",
+        target_mnemonics,
+        "\ntarget_mnemonics_TEST:",
+        target_mnemonics_TEST,
+    )
 
     # prepare TEST data with terget mnemonics
     df_TEST = df_TEST.copy()
 
     # df_TEST = process_las().despike(df_TEST, window_size=5)
-
-    # print("df_TEST", df_TEST.head())
-    # print(target_mnemonics_TEST)
-
     df_TEST = process_las().get_df_by_mnemonics(
         df=df_TEST,
         target_mnemonics=target_mnemonics_TEST,
-        new_mnemonics=["DEPTH"],
         log_mnemonics=["RT"],
         strict_input_output=True,
         alias_dict=alias_dict,
         drop_na=False,
     )
 
-    # print("Data df_test shape:", df_TEST.shape)
-    # print("Selected df_test columns:", df_TEST.columns)
-
     # make sure the column sequence is the same as target_mnemonics
+    # print("df_TEST", df_TEST.head())
     X_test = df_TEST.values
 
-    # just need to get the scaler
-    Xy = process_las().get_compiled_df_from_las_dict(
-        las_data_dict=las_data_DTSM_QC,
-        target_mnemonics=target_mnemonics_TRAIN,
-        new_mnemonics=["DEPTH"],
-        log_mnemonics=["RT"],
-        strict_input_output=True,
-        alias_dict=alias_dict,
-        drop_na=True,
-        return_dict=False,
-    )
-
-    scaler_x, scaler_y = RobustScaler(), RobustScaler()
-    X_train = scaler_x.fit_transform(Xy.values[:, :-1])
-    y_train = scaler_y.fit_transform(Xy.values[:, -1:])
-
-    model.fit(X_train, y_train)
-
-    assert all(
-        i in Xy.columns[:-1] for i in df_TEST.columns
-    ), "Train and test data should have the same column except 'DTSM'!"
-
-    # print('Xy:',Xy.head())
-    # print('df_TEST:',df_TEST.head())
-
     # scale test data and predict, and scale back prediction
-    X_test = scaler_x.transform(X_test)
-    y_predict = scaler_y.inverse_transform(model.predict(X_test).reshape(-1, 1))
-    y_predict = pd.DataFrame(y_predict, columns=["Predicted DTSM"])
+    X_test = scalers[0].transform(X_test)
+    y_predict = scalers[1].inverse_transform(model.predict(X_test).reshape(-1, 1))
+    y_predict = pd.DataFrame(y_predict, columns=["Pred DTSM"])
 
     y_predict.index = df_TEST.index
     print(
@@ -129,209 +103,144 @@ def test_predict(
     return y_predict
 
 
-#%% load existing models
+#% load existing models
+models_TEST = dict()
+for path in glob.glob("models/models_TEST/*.pickle"):
+    # load the model_dict
+    model_dict = read_pkl(path)
+    print(model_dict["model_name"], model_dict["target_mnemonics"])
 
-mnemonic_dict = {
-    # "DTSM" as response
-    "7": ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    "7_1": ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    "7_2": ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ", "DTSM"],
-    "6_1": ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "DTSM"],
-    "6_2": ["DTCO", "RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTSM"],
-    "3_1": ["DTCO", "NPHI", "GR", "DTSM"],
-    "3_2": ["DTCO", "GR", "RT", "DTSM"],
-    # "DTCO" as response,for well 6 and 8, to fix DTCO
-    # "DTCO_5": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "DTCO"],
-    # "DTCO_6": ["RHOB", "NPHI", "GR", "CALI", "PEFZ", "RT", "DTCO"],
-}
+    models_TEST[model_dict["model_name"]] = model_dict
 
+TEST_folder = "predictions/TEST"
 
-# load the model
-model = read_pkl("models/Tuned_Trained_XGB_Models_DTSM.pickle")
+#%% Well 2,3,6,7,8,9 using model 5_1, Well 4,5 use model 5_2
 
-model_xgb_6_2 = model["model_xgb_6_2"]
-model_xgb_6_1 = model["model_xgb_6_1"]
-model_xgb_3_1 = model["model_xgb_3_1"]
-model_xgb_3_2 = model["model_xgb_3_2"]
-
-
-#%%  Predict on TEST data, Group1, 7features
-
-# folder to store TEST prediction results
-TEST_folder = "TEST"
-
-Group1 = [
+model_names = ["5_1", "5_1", "5_1", "5_1", "5_1", "5_1", "5_2", "5_2"]
+Group = [
     "002-Well_02",
     "003-Well_03",
     "006-Well_06",  # have to use 6_2
     "007-Well_07",
     "008-Well_08",
     "009-Well_09",
+    "004-Well_04",
+    "005-Well_05",
 ]
 
-#%  choose 7 features/predictors (not including 'DTSM')
-target_mnemonics_6_2 = mnemonic_dict["6_2"][:-1]
 
-# temp replace 6_2 model
-# target_mnemonics_6_2 = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
-# params_xgb = {
-#     "subsample": 0.8999999999999999,
-#     "n_estimators": 150,
-#     "min_child_weight": 0.08,
-#     "max_depth": 3,
-#     "learning_rate": 0.03906939937054615,
-#     "lambda": 31,
-# }
-# model_xgb_6_2 = XGB(**params_xgb, tree_method="gpu_hist", objective="reg:squarederror")
+for ix, WellName in enumerate(Group):
 
-for WellName in Group1:
-
+    model_name = model_names[ix]
+    target_mnemonics = models_TEST[model_name]["target_mnemonics"]
+    model = models_TEST[model_name]["best_estimator"]
     df_TEST = las_data_TEST[WellName]
 
     y_predict = test_predict(
-        target_mnemonics=target_mnemonics_6_2,
-        model=model_xgb_6_2,
+        target_mnemonics=target_mnemonics,
+        model=model,
+        scalers=[
+            models_TEST[model_name]["scaler_x"],
+            models_TEST[model_name]["scaler_y"],
+        ],
         df_TEST=df_TEST,
-        las_data_DTSM=las_data_DTSM_QC,
-        lat_lon_TEST=None,
-        las_lat_lon=None,
-        sample_weight_type=None,
-        TEST_folder="TEST",
+        TEST_folder=TEST_folder,
     )
 
-    y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}.csv")
-    print("X_test and y_predict length:", len(df_TEST), len(y_predict))
-    print(f"Prediction results are saved at: predictions/{TEST_folder}")
+    y_predict.to_csv(f"{TEST_folder}/Prediction.{WellName}.csv")
+    print(f"Predictions for {WellName} are saved at: {TEST_folder}")
 
-#%% check predicted data: "001-Well_01"
+#%% Well 01
+model_names = ["5_1", "3_1"]
+Group = ["001-Well_01", "001-Well_01"]
 
-WellName = "001-Well_01"
-df_TEST = las_data_TEST[WellName]
-print("Total row of data:", len(df_TEST))
+y_predict_ = []
+for ix, WellName in enumerate(Group):
 
-#% top part with 7 features
-df_TEST_01A = df_TEST[df_TEST.index <= 7900]
-df_TEST_01A.shape
-
-y_predict_01A = test_predict(
-    target_mnemonics=target_mnemonics_6_2,
-    model=model_xgb_6_2,
-    df_TEST=df_TEST_01A,
-    las_data_DTSM=las_data_DTSM_QC,
-    lat_lon_TEST=None,
-    las_lat_lon=None,
-    sample_weight_type=None,
-    TEST_folder="TEST",
-)
-
-#% bottom part with 3 features, model_3_1
-target_mnemonics_3_1 = mnemonic_dict["3_1"][:-1]
-
-df_TEST_01B = df_TEST[df_TEST.index > 7900]
-df_TEST_01B.shape
-
-y_predict_01B = test_predict(
-    target_mnemonics=target_mnemonics_3_1,
-    model=model_xgb_3_1,
-    df_TEST=df_TEST_01B,
-    las_data_DTSM=las_data_DTSM_QC,
-    lat_lon_TEST=None,
-    las_lat_lon=None,
-    sample_weight_type=None,
-    TEST_folder="TEST",
-)
-
-y_predict = pd.concat([y_predict_01A, y_predict_01B])
-y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}.csv")
-
-print(f"Prediction results are saved at: predictions/TEST")
-
-
-#%% check predicted data: ["004-Well_04", "005-Well_05"]
-
-#%  choose 7 features/predictors (not including 'DTSM')
-target_mnemonics_6_1 = mnemonic_dict["6_1"][:-1]
-
-Group2 = ["004-Well_04", "005-Well_05"]
-
-for WellName in Group2:
-
+    model_name = model_names[ix]
+    target_mnemonics = models_TEST[model_name]["target_mnemonics"]
+    model = models_TEST[model_name]["best_estimator"]
     df_TEST = las_data_TEST[WellName]
 
     y_predict = test_predict(
-        target_mnemonics=target_mnemonics_6_1,
-        model=model_xgb_6_1,
+        target_mnemonics=target_mnemonics,
+        model=model,
+        scalers=[
+            models_TEST[model_name]["scaler_x"],
+            models_TEST[model_name]["scaler_y"],
+        ],
         df_TEST=df_TEST,
-        las_data_DTSM=las_data_DTSM_QC,
-        lat_lon_TEST=None,
-        las_lat_lon=las_lat_lon,
-        sample_weight_type=None,
-        TEST_folder="TEST",
+        TEST_folder=TEST_folder,
     )
-
-    y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}.csv")
-    print("X_test and y_predict length:", len(df_TEST), len(y_predict))
-    print(f"Prediction results are saved at: predictions/TEST")
+    y_predict_.append(y_predict)
 
 
-#%% check predicted data: "010-Well_10"
-
-WellName = "010-Well_10"
-df_TEST = las_data_TEST[WellName]
-print("Total row of data:", len(df_TEST))
-
-#% top part with 3 features
-target_mnemonics_3_2 = mnemonic_dict["3_2"][:-1]
-
-df_TEST_10A = df_TEST[df_TEST.index < 8700]
-df_TEST_10A.shape
-
-y_predict_10A = test_predict(
-    target_mnemonics=target_mnemonics_3_2,
-    model=model_xgb_3_2,
-    df_TEST=df_TEST_10A,
-    las_data_DTSM=las_data_DTSM_QC,
-    lat_lon_TEST=None,
-    las_lat_lon=None,
-    sample_weight_type=None,
-    TEST_folder="TEST",
+# combined prediction
+y_predict = pd.concat(
+    [
+        y_predict_[0][y_predict_[0].index <= 7900],
+        y_predict_[1][y_predict_[1].index > 7900],
+    ],
+    axis=0,
 )
 
-# bottom part
-df_TEST_10B = df_TEST[df_TEST.index >= 8700]
-df_TEST_10B.shape
+y_predict.to_csv(f"{TEST_folder}/Prediction.{WellName}.csv")
+print(f"Predictions for {WellName} are saved at: {TEST_folder}")
 
-y_predict_10B = test_predict(
-    target_mnemonics=target_mnemonics_6_2,
-    model=model_xgb_6_2,
-    df_TEST=df_TEST_10B,
-    las_data_DTSM=las_data_DTSM_QC,
-    lat_lon_TEST=None,
-    las_lat_lon=None,
-    sample_weight_type=None,
-    TEST_folder="TEST",
+#%% Well 10
+model_names = ["3_2", "5_1"]
+Group = ["010-Well_10", "010-Well_10"]
+
+y_predict_ = []
+for ix, WellName in enumerate(Group):
+
+    model_name = model_names[ix]
+    target_mnemonics = models_TEST[model_name]["target_mnemonics"]
+    model = models_TEST[model_name]["best_estimator"]
+    df_TEST = las_data_TEST[WellName]
+
+    y_predict = test_predict(
+        target_mnemonics=target_mnemonics,
+        model=model,
+        scalers=[
+            models_TEST[model_name]["scaler_x"],
+            models_TEST[model_name]["scaler_y"],
+        ],
+        df_TEST=df_TEST,
+        TEST_folder=TEST_folder,
+    )
+    y_predict_.append(y_predict)
+
+# combined prediction
+y_predict = pd.concat(
+    [
+        y_predict_[0][y_predict_[0].index <= 8650],
+        y_predict_[1][y_predict_[1].index > 8650],
+    ],
+    axis=0,
 )
 
-y_predict = pd.concat([y_predict_10A, y_predict_10B])
-y_predict.to_csv(f"predictions/TEST/Prediction_{WellName}.csv")
+y_predict.to_csv(f"{TEST_folder}/Prediction.{WellName}.csv")
+print(f"Predictions for {WellName} are saved at: {TEST_folder}")
 
-print(f"Prediction results are saved at: predictions/TEST")
 
-# assert 1 == 2, "make sure to update the test well, fix missing data and fix DTCO"
 #%% check df length, and plot the prediction and do a visual check on prediction quality
 
-
-for f in glob.glob("predictions/TEST/*.csv"):
-    f_name = re.split("[\\\/]", f)[-1][-15:-4]
+for f in glob.glob(f"{TEST_folder}/*.csv"):
+    f_name = re.split("[\\\/.]", f)[-2]
 
     df_ypred = pd.read_csv(f)
+
+    # rename columns for plotting
     df_ypred.columns = ["Depth", "DTSM_Pred"]
 
+    # make sure the predicted depth is the exactly the same as raw depth
+    all(df_ypred.index == las_data_TEST[f_name].index)
     print(
         f_name,
-        "raw data shape",
+        "\nraw data shape\t\t",
         las_data_TEST[f_name].shape,
-        "predict data shape",
+        "\npredict data shape\t",
         df_ypred.shape,
     )
     plot_logs_columns(
@@ -346,19 +255,7 @@ for f in glob.glob("predictions/TEST/*.csv"):
         plot_save_format=["png", "html"],  # availabe format: ["png", "html"]
     )
 
-
-#%% convert to submission format
-
-for f in glob.glob("predictions/TEST/*.csv"):
-    f_name = re.split("[\\\/]", f)[-1][-11:-4]
-
-    df_ypred = pd.read_csv(f)
+    #%% convert to submission format
     df_ypred.columns = ["Depth", "DTSM"]
-
-    print(f_name)
-    # a = df_ypred['Depth']
-    # b = las_data_TEST['010-Well_10']
-    b = las_data_TEST[f'0{f_name[-2:]}-{f_name}']
-    print(all(df_ypred['Depth']==b.index))
-
-    # df_ypred.to_excel(f"predictions/TEST/to_submit/{f_name}.xlsx", index=False)
+    f_name_ = int(re.split("[_]", f_name)[-1])
+    df_ypred.to_excel(f"{TEST_folder}/Well {f_name_}.xlsx", index=False)

@@ -55,3 +55,16 @@ KNN_7: rmse = 7 in cv but 11.42 in LOOCV! NOT useful!!!
 model_xgb_5_1: rmse= [cv: 0.3195 , LOOCV: 9.15]
 
 
+# removing outliers
+model_xgb_5_1 improves rmse from 9.2 to 8.9 after removing outliers using EllipticEnvelope(contamination=0.01). Models were tuned using GroupKFOld CV (cv=5) and were evaluated per las file. 
+
+After tuning models with KFold CV (cv=5), model_xgb_5_1 rmse became: [8.863642255035646, 9.833146865983155], 'rmse_CV': 0.296437.
+
+Now let's tune the models with KFold CV using contamination=0.05 for removing outliers using EllipticEnvelope, model_xgb_5_1 rmse became: 
+[9.03451436065921, 10.114004938425541], 'rmse_CV': 0.27013096226469396.
+
+Let's try contamination=0.03, 'rmse_LOOCV_mean': 8.953640123151171, 'rmse_LOOCV_corr': 9.986884226154611}, 'rmse_CV': 0.28089574167504056, 
+
+6_2_base: rmse= [8.90, 9.83]
+
+6_2_despike: rmse = [9.07, 10.01], it seems despike decrease performance!
