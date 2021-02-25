@@ -23,22 +23,15 @@ from plot import plot_crossplot, plot_logs_columns
 
 from load_pickle import (
     alias_dict,
-    las_data_DTSM_QC,
-    las_lat_lon,
-    lat_lon_TEST,
-    las_data_TEST,
+    las_data_TEST_renamed,
 )
 
 
 # load customized functions and requried dataset
 from util import (
     read_pkl,
-    get_alias,
-    get_mnemonic,
-    get_sample_weight,
-    get_sample_weight2,
-    process_las,
-    get_sample_weight2_TEST,
+    # get_alias,
+    # get_mnemonic,
 )
 
 pio.renderers.default = "browser"

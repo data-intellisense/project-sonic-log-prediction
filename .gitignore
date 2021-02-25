@@ -3,10 +3,9 @@
 **__pycache__
 
 .git
-!alias_dict.pickle
-!*.csv
 
 data/
 plots/
 predictions/
 backup/
+to_submit/

@@ -7,7 +7,7 @@ import lasio
 import numpy as np
 import pandas as pd
 
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, RobustScaler
 from scipy.signal import medfilt
 from scipy.ndimage import median_filter
 from sklearn.base import clone
@@ -53,6 +53,183 @@ def get_mnemonic(alias=None, alias_dict=None):
         return ""
 
 
+def add_gradient_features(df=None):
+    assert isinstance(df, pd.DataFrame)
+    assert "DTSM" not in df.columns
+
+    df_original = df.copy()
+    df = df.copy()
+    cols = [col for col in ["RHOB", "NPHI", "GR", "DTCO"] if col in df.columns]
+    # cols = [col for col in ["RHOB", "NPHI", "GR", "DTCO"] if col in df.columns]
+    df = df[cols]
+    df_gradient = np.gradient(df.values, axis=0)
+    df_gradient = pd.DataFrame(df_gradient, columns=df.columns + "_grad")
+    df_gradient.index = df.index
+    return pd.concat([df_original, df_gradient], axis=1)
+
+
+def assign_rock_type(df=None, las_name=None, info=None):
+    """
+    return df['rock_type']=0 if las_name not in info.index
+    """
+
+    if las_name not in info.index:
+        print(f"{las_name} not in rock_info, assigned rock_type=0!")
+        df["rock_type"] = 0
+        return df
+
+    df = df.copy()
+
+    if pd.isnull(info.loc[las_name, "rock_median"]):
+        assert not pd.isnull(info.loc[las_name, "rock_type"])
+        df["rock_type"] = info.loc[las_name, "rock_type"]
+    else:
+        assert all(
+            [
+                not pd.isnull(info.loc[las_name, "rock_type"]),
+                not pd.isnull(info.loc[las_name, "rock_type2"]),
+            ]
+        )
+        df["rock_type"] = np.nan
+        df["rock_type"][df.index < info.loc[las_name, "rock_median"]] = info.loc[
+            las_name, "rock_type"
+        ]
+        df["rock_type"][df.index >= info.loc[las_name, "rock_median"]] = info.loc[
+            las_name, "rock_type2"
+        ]
+
+    return df
+
+
+def predict_zones(df=None, cluster_model=None):
+    df = df.copy()
+
+    if cluster_model is not None:
+        target_mnemonics = ["DTCO", "NPHI", "GR"]
+        assert all([i in df.columns for i in target_mnemonics])
+        df["labels"] = cluster_model["model"].predict(
+            cluster_model["scaler_x"].transform(df[target_mnemonics])
+        )
+    else:
+        df["labels"] = 9
+
+    # if "RHOB" in df.columns and cluster_model is not None:
+    #     std_ = df[target_mnemonics].std().values.reshape(-1, 1)
+    #     df["labels"] = cluster_model.predict(std_)[0]
+    # else:
+    #     df["labels"] = 9
+
+    # return a np.array with numbers for zones
+    return df["labels"].values
+
+
+def fit_X_zone(model=None, cluster_model=None, Xy=None, sample_weight=None):
+
+    # cluster_mode can be provided as np.ndarry directly
+
+    # scale the data before zoning
+    scaler_x, scaler_y = RobustScaler(), RobustScaler()
+    X_train_ = scaler_x.fit_transform(Xy.iloc[:, :-1])
+    y_train_ = scaler_y.fit_transform(Xy.iloc[:, -1:])
+
+    if sample_weight is None:
+        sample_weight = np.ones((len(Xy), 1))
+
+    model_dict = dict()
+    # predict zones and build models for each zones
+    if cluster_model is not None:
+        if isinstance(cluster_model, np.ndarray):
+            zones = cluster_model
+        else:
+            zones = predict_zones(df=Xy, cluster_model=cluster_model)
+        zone_ids = np.unique(zones)
+
+        # create individual model for each zone
+        for zone_id in zone_ids:
+            print(f"zone_id: {zone_id}")
+            X_train = X_train_[zones == zone_id]
+            y_train = y_train_[zones == zone_id]
+            sw_train = sample_weight[zones == zone_id]
+
+            # reset model for each zone_id
+            model_ = clone(model)
+            model_.fit(X_train, y_train, sw_train)
+
+            # save the fitted model
+            model_dict[zone_id] = model_
+
+    # crate model using all data for all zones
+    model_ = clone(model)
+    model_.fit(X_train_, y_train_, sample_weight)
+    model_dict["9"] = model_
+
+    return model_dict, scaler_x, scaler_y
+
+
+def pred_y_zone(models=None, scalers=None, zone_model=None, X_test=None):
+    """
+    Sample input format:
+    models={'xgb': {'0'=XGB(), '1'=XGB() ...}
+            'mlp': {'0'=MLP(), '1'=MLP() ...}
+            }
+    scalers={'x': scaler_x, 'y': scaler_y'}
+    zone_model={'model': KMeans(), 'scaler_x': RobusScaler(), 'target_mnemonics': ['DTCO', 'NPHI', 'GR']}
+    X_test=pd.DataFrame()
+
+    Return: y_predict (np.ndarray)
+    """
+
+    X_test = X_test.copy()
+    y_predict_models = []
+
+    # if data has required curves for zone classification
+    if (
+        all([i in X_test.columns for i in ["DTCO", "NPHI", "GR"]])
+        and zone_model is not None
+    ):
+        zones = predict_zones(X_test, cluster_model=zone_model)
+        zone_ids = np.unique(zones)
+
+        for model_zones in models.values():
+
+            # reset y_predict for each model
+            y_predict = X_test.iloc[:, 0:1].copy()
+
+            for zone_id in zone_ids:
+
+                # get the model for zone_id
+                model = model_zones[zone_id]
+
+                # get data for zone_id
+                X_test_ = X_test.values[zones == zone_id]
+
+                X_test_ = scalers["x"].transform(X_test_)
+                y_predict[zones == zone_id] = scalers["y"].inverse_transform(
+                    model.predict(X_test_).reshape(-1, 1)
+                )
+
+            # append y_predict for each model
+            y_predict_models.append(y_predict)
+
+    else:
+
+        X_test_ = scalers["x"].transform(X_test)
+
+        for model_zones in models.values():
+            model = model_zones["9"]  # '9' is the overall model
+            y_predict = scalers["y"].inverse_transform(
+                model.predict(X_test_).reshape(-1, 1)
+            )
+
+            # append y_predict for each model
+            y_predict_models.append(y_predict)
+
+    y_predict_models = np.stack(y_predict_models, axis=1)
+    y_predict = np.mean(y_predict_models, axis=1)
+
+    return y_predict
+
+
 #%% read las, return curves and data etc.
 
 
@@ -74,7 +251,7 @@ class read_las:
         return self.df_curvedata()[["mnemonic", "unit"]]
 
     def get_curvedata(self, data_names=[]):
-        df = self.df_curves()
+        df = self.df_curvedata()
         return df
 
     def df_welldata(self, valid_value_only=True):
@@ -209,6 +386,26 @@ def get_sample_weight2(
     return sample_weight
 
 
+def get_sample_weight3(df=None, depth_range=None, decay=1):
+    assert isinstance(depth_range, list)
+
+    df = df.copy()
+    depth_range = [7000, 8000]
+    depth_min = min(depth_range)
+    depth_max = max(depth_range)
+    df["sample_weight"] = 1
+
+    df["sample_weight"].loc[df.index < depth_min] = abs(
+        df.index[df.index < depth_min] - depth_min
+    )
+    df["sample_weight"].loc[df.index > depth_max] = abs(
+        df.index[df.index > depth_max] - depth_max
+    )
+    df["sample_weight"] = np.power(decay, df["sample_weight"])
+
+    return df["sample_weight"].values
+
+
 def get_nearest_neighbors(
     depth_TEST=None,
     lat_lon_TEST=None,
@@ -252,7 +449,37 @@ def get_nearest_neighbors(
     else:
         nn = (
             depth_rank.sort_values(by="d", axis=0, ascending=True)
-            .iloc[:num_of_neighbors, 0:1]
+            .iloc[1 : num_of_neighbors + 1, 0:1]
+            .values
+        )
+    return nn
+
+
+def get_nearest_neighbors_2(
+    lat_lon_TEST=None,
+    las_lat_lon=None,
+    num_of_neighbors=20,
+):
+
+    assert isinstance(
+        lat_lon_TEST, list
+    ), "las_lon_TEST should be a list with lat and lon"
+    num_of_neighbors = int(num_of_neighbors)
+
+    depth_rank = []
+    for key in las_lat_lon.keys():
+        d = get_distance(lat_lon_TEST, las_lat_lon[key])
+
+        depth_rank.append([key, d])
+
+    depth_rank = pd.DataFrame(depth_rank, columns=["WellName", "d"])
+
+    if num_of_neighbors == 0:
+        nn = depth_rank.iloc[1:, 0:1].values
+    else:
+        nn = (
+            depth_rank.sort_values(by="d", axis=0, ascending=True)
+            .iloc[1:num_of_neighbors, 0:1]
             .values
         )
     return nn
@@ -345,7 +572,9 @@ def CV_weighted(model, X, y, weights=None, cv=10):
             model_clone.fit(X_train, y_train)
         y_pred = model_clone.predict(X_test)
 
-        score = mean_squared_error(y_test, y_pred, sample_weight=weights_test)
+        score = mean_squared_error(
+            y_test, y_pred, sample_weight=weights_test, squared=False
+        )
 
         scores.append(score)
 
@@ -370,7 +599,7 @@ class process_las:
                     c[n] = c[n] + "_" + str(m)
         return c
 
-    def despike(self, df=None, cols=None, size=21):
+    def despike(self, df=None, cols=None, size=11):
         """
         df should be a dataframe, will despike all or selected columns
         """
@@ -430,6 +659,7 @@ class process_las:
         return df
 
     def detect_outliers(self, df=None, contamination=0.01):
+        assert all([i in df.columns for i in ["DTCO", "DTSM"]])
 
         outlier_detector = EllipticEnvelope(contamination=contamination)
         try:
@@ -448,6 +678,7 @@ class process_las:
         outliers_contamination=None,
         alias_dict=None,
         drop_na=True,
+        despike_=False,
     ):
         """
         useage: get a cleaned dataframe by given mnemonics,
@@ -513,28 +744,38 @@ class process_las:
             df_ = pd.DataFrame(df_, columns=df_cols)
             df_.index = df.index
 
+        # # # shift NPHI
+        # if "NPHI" in df_.columns:
+        #     if any(df_["NPHI"] < 0):
+        #         adj = df_[df_["NPHI"] < 0]["NPHI"].quantile(q=0.001)
+        #         df_["NPHI"] = df_["NPHI"] + abs(adj)
+
+        # remove data that's "abnormal", not for TEST data which does not have 'DTSM'
+        if "DTSM" in target_mnemonics:
+            mnemonic_range = {
+                "DTSM": [60, 270],
+                "DTCO": [40, 120],
+                "GR": [-10, 250],
+                "NPHI": [-0.06, 0.6],
+                "PEFZ": [1, 11],
+                "RHOB": [1.5, 3.2],
+                "CALI": [4, 25],
+            }
+            for key, value in mnemonic_range.items():
+                if key in df_.columns:
+                    df_[key] = df_[key][(df_[key] >= value[0]) & (df_[key] <= value[1])]
+
+            if all([i in df_.columns for i in ["DTCO", "DTSM"]]):
+                df_ = df_[~((df_["DTCO"] > 95) & (df_["DTSM"] < 80))]
+
+            if all([i in df_.columns for i in ["RHOB", "DTSM"]]):
+                df_ = df_[~((df_["RHOB"] < 2.2) & (df_["DTSM"] < 80))]
+
         # take log of 'RT' etc.
         for col in log_mnemonics:
             if col in df_.columns:
                 df_[col] = abs(df_[col]) + 1e-4
                 df_[col] = np.log(df_[col])
-            # else:
-            # print(f"\t{col} not in columns, no log conversion performed!")
-
-        # remove data that's "abnormal"
-        mnemonic_range = {
-            "DTSM": [60, 250],
-            "DTCO": [10, 200],
-            "GR": [0, 290],
-            "NPHI": [-0.3, 0.6],
-            "PEFZ": [0, 11],
-            "RHOB": [1, 3.2],
-            "CALI": [0, 25],
-        }
-
-        for key, value in mnemonic_range.items():
-            if key in df_.columns:
-                df_[key] = df_[key][(df_[key] >= value[0]) & (df_[key] <= value[1])]
 
         # add 'DEPTH' col if requested
         if ("DEPTH" in target_mnemonics) and ("DEPTH" not in df_.columns):
@@ -545,20 +786,19 @@ class process_las:
             df_ = df_.dropna(axis=0)  # subset=["DTSM"],
 
         # smooth/despike the logs
-        df_ = self.despike(df_)
+        if despike_:
+            df_ = self.despike(df_)
 
-        # # outliers == -1, inliners==1
-        # if outliers_contamination is not None and len(df_) > 1 and df_ is not None:
-        #     df_ = df_[
-        #         self.detect_outliers(df=df_, contamination=outliers_contamination) == 1
-        #     ]
-
-        # replace outliers with interpolated values
-        # outliers == -1, inliners==1
-        if outliers_contamination is not None and len(df_) > 1 and df_ is not None:
-            df_ = df_[
-                self.detect_outliers(df=df_, contamination=outliers_contamination) == 1
-            ]
+        # remove 'outliers', where DTCO and DTSM does not correlate well
+        # outliers == -1, inliners==1, if have problem, then do not remove as it's not as a big deal
+        try:
+            if outliers_contamination is not None and len(df_) > 1 and df_ is not None:
+                df_ = df_[
+                    self.detect_outliers(df=df_, contamination=outliers_contamination)
+                    == 1
+                ]
+        except:
+            pass
 
         if strict_input_output and all([i in df_.columns for i in target_mnemonics]):
             # print(f"\tAll target mnemonics are found in df, returned COMPLETE dataframe!")

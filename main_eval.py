@@ -14,8 +14,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import RobustScaler, StandardScaler
 from xgboost import XGBRegressor as XGB
 from sklearn.base import clone
+from sklearn.linear_model import HuberRegressor as Huber
 
-from plot import plot_crossplot, plot_logs_columns
+from plot import plot_crossplot, plot_logs_columns, plot_outliers
 
 SelectedScaler = RobustScaler
 
@@ -26,6 +27,8 @@ from load_pickle import (
     las_depth,
     las_lat_lon,
     test_list,
+    TEST_neighbors,
+    TEST_neighbors_7features,
 )
 
 # load customized functions and requried dataset
@@ -88,14 +91,16 @@ def LOOCV_evaluate(
             X_test = Xy_test.values[:, :-1]
             y_test = Xy_test.values[:, -1:]
 
+            # # Huber regression
+            # model.fit(X_test, y_test)
+            # print(model)
+
             # print(X_test.shape, X_test)
-            if scaling:
-                X_test = scalers[0].transform(X_test)
-                y_predict = scalers[1].inverse_transform(
-                    model.predict(X_test).reshape(-1, 1)
-                )
-            else:
-                y_predict = model.predict(X_test).reshape(-1, 1)
+
+            X_test = scalers[0].transform(X_test)
+            y_predict = scalers[1].inverse_transform(
+                model.predict(X_test).reshape(-1, 1)
+            )
 
             y_predict_models.append(y_predict)
 
@@ -103,7 +108,7 @@ def LOOCV_evaluate(
         y_predict = np.mean(y_predict_models, axis=1)
 
         # calculate rmse_las
-        rmse_las = mean_squared_error(y_test, y_predict) ** 0.5
+        rmse_las = mean_squared_error(y_test, y_predict, squared=False)
 
         print(f"{las_name} rmse: {rmse_las:.2f} \trun in {time.time()-time0:.1f} s")
 
@@ -120,12 +125,27 @@ def LOOCV_evaluate(
             plot_save_format=["png"],  # availabe format: ["png", "html"]
         )
 
+        # # plot DTSM vs DTCO
+        # plot_outliers(
+        #     Xy=Xy_test,
+        #     Xy_out=None,
+        #     abline=pd.DataFrame(np.c_[X_test, y_predict], columns=["DTCO", "DTSM"]),
+        #     text="DTCO vs DTSM",
+        #     axis_range=300,
+        #     plot_show=False,
+        #     plot_return=False,
+        #     plot_save_file_name=f"{model_name}-{las_name}-DVCO-vs-DTSM-Crossplot",
+        #     plot_save_path=path,
+        #     plot_save_format=["png"],
+        # )
+
         # plot pred vs true DTSM
         # df_ypred with proper column names as pd.DataFrame is required for proper plotting
         df_ypred = pd.DataFrame(
             np.c_[Xy_test.index.values.reshape(-1, 1), y_predict.reshape(-1, 1)],
             columns=["Depth", "DTSM_Pred"],
         )
+
         plot_logs_columns(
             df=Xy_test,
             DTSM_pred=df_ypred,
@@ -157,10 +177,11 @@ def LOOCV_evaluate(
 
 
 #%%  LOOCV_evaluate
-path = f"predictions/evaluate/6_2_despike"
+path = f"predictions/evaluate/6_2_base"
 
 if not os.path.exists(path):
     os.mkdir(path)
+
 
 for model_path in glob.glob(f"{path}/*.pickle"):
 
@@ -181,7 +202,7 @@ for model_path in glob.glob(f"{path}/*.pickle"):
     rmse_LOOCV = LOOCV_evaluate(
         target_mnemonics=model_dict["target_mnemonics"],
         models=models,
-        scaling=True,
+        scaling=False,
         scalers=[model_dict["scaler_x"], model_dict["scaler_y"]],
         path=path,
         las_data_DTSM=las_data_DTSM_QC,
@@ -200,31 +221,79 @@ for model_path in glob.glob(f"{path}/*.pickle"):
 # checkout the save model
 for model in glob.glob(f"{path}/*.pickle"):
     print(read_pkl(model))
-#%% check out the models
 
-path = "models/GroupKFoldCV"
+#%% with trained model in specific format
 
-temp = []
+# for model_path in glob.glob(f"{path}/*.pickle"):
 
-for model in glob.glob(f"{path}/*.pickle"):
+#     # load the model_dict
+#     model_dict = read_pkl(model_path)
 
-    # load the model_dict
-    model_dict = read_pkl(model)
-    keys = [
-        "model_name",
-        "rmse_LOOCV",
-        "rmse_LOOCV_mean",
-        "rmse_LOOCV_corr",
-        "rmse_CV",
-        "target_mnemonics",
-    ]
-    keys_ = [key for key in keys if key in model_dict.keys()]
-    temp.append([model_dict[key] for key in keys_])
+#     print(
+#         model_dict["model_name"], model_dict["target_mnemonics"], model_dict["rmse_CV"]
+#     )
+#     print("\n")
 
-# create a dataframe for sorting
-temp = pd.DataFrame(temp, columns=keys_)
+#     # model_name = model_dict["model_name"]
+#     # models = {f"XGB_{model_name}": model_dict["best_estimator"]}
 
-for col in ["rmse_LOOCV_corr", "rmse_LOOCV_mean", "rmse_LOOCV", "rmse_CV"]:
+#     model_name = "6_2"
+#     models = {f"KNN_{model_name}": KNN(neighbors=10)}
 
-    if col in temp.columns:
-        print(temp.sort_values(by=[col], ascending=True))
+#     # # added Huber temporary
+#     # models = {f"Huber_{model_name}": Huber()}
+#     # model_dict["target_mnemonics"] = ["DTCO", "DTSM"]
+
+#     # from models.models import models
+#     time0 = time.time()
+
+#     rmse_LOOCV = LOOCV_evaluate(
+#         target_mnemonics=model_dict["target_mnemonics"],
+#         models=models,
+#         scaling=False,
+#         scalers=[model_dict["scaler_x"], model_dict["scaler_y"]],
+#         path=path,
+#         las_data_DTSM=las_data_DTSM_QC,
+#         las_lat_lon=las_lat_lon,
+#         sample_weight_type=None,
+#     )
+
+#     # update the model_dict with rmse_LOOCV and save it!
+#     model_dict["rmse_LOOCV_mean"] = rmse_LOOCV[0]
+#     model_dict["rmse_LOOCV_corr"] = rmse_LOOCV[1]
+#     to_pkl(model_dict, f"{path}/model_xgb_{model_name}.pickle")
+
+#     print(f"Completed training with all models in {time.time()-time0:.1f} seconds!")
+#     print(f"Prediction results are saved at: {path}")
+
+# # checkout the save model
+# for model in glob.glob(f"{path}/*.pickle"):
+#     print(read_pkl(model))
+# #%% check out the models
+
+# path = "models/GroupKFoldCV"
+
+# temp = []
+
+# for model in glob.glob(f"{path}/*.pickle"):
+
+#     # load the model_dict
+#     model_dict = read_pkl(model)
+#     keys = [
+#         "model_name",
+#         "rmse_LOOCV",
+#         "rmse_LOOCV_mean",
+#         "rmse_LOOCV_corr",
+#         "rmse_CV",
+#         "target_mnemonics",
+#     ]
+#     keys_ = [key for key in keys if key in model_dict.keys()]
+#     temp.append([model_dict[key] for key in keys_])
+
+# # create a dataframe for sorting
+# temp = pd.DataFrame(temp, columns=keys_)
+
+# for col in ["rmse_LOOCV_corr", "rmse_LOOCV_mean", "rmse_LOOCV", "rmse_CV"]:
+
+#     if col in temp.columns:
+#         print(temp.sort_values(by=[col], ascending=True))

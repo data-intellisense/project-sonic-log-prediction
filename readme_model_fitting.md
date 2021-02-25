@@ -68,3 +68,20 @@ Let's try contamination=0.03, 'rmse_LOOCV_mean': 8.953640123151171, 'rmse_LOOCV_
 6_2_base: rmse= [8.90, 9.83]
 
 6_2_despike: rmse = [9.07, 10.01], it seems despike decrease performance!
+
+
+with 5 clusters, 6_2_5clustered rmse=[7.02, 7.64]!!! 
+rerun the 6_2_base with the same test_list as 6_2_5clustered, rmse=[7.73, 8.84].
+Still 5 clusters, improved performance!
+
+After use all scaling for all zones, the rmse for 6_2_5clustered_samescaling: [6.91, 7.53]!!! improved by [0.11, 0.11]
+
+Now let's try 3 clusters! As expected, rmse becomes [7.89, 9.12], getting worse. 
+
+Use 5 clusters instead!
+
+Used two layer MLP, rmse=[6.46, 7.17]. It could be overfitting !!! So need to separate test data from training data!
+But first let's do a model stack, using XGB and MLP! Stack model rmse=[6.65, 7.42]. Even though it's slightly higher than MLP, I believe it's more robust than MLP, which could have been overfitted!
+
+Let's use stacked model, average XGB and MLP, scaling all data, then cluster the data with KMeans into 5 clusters. Build XGB and MLP models for each zone.
+

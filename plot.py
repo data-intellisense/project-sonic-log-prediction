@@ -24,6 +24,38 @@ from load_pickle import las_data_DTSM_QC, las_lat_lon, alias_dict
 
 pio.renderers.default = "browser"
 
+#%% plot feature importance
+
+
+def plot_feature_important(
+    best_estimator=None, features=None, plot_save_name=None, path=None
+):
+    xgb_feature_importance = [round(i, 3) for i in best_estimator.feature_importances_]
+    # print(f"Feature importance:\n{features} \n{xgb_feature_importance}")
+
+    xgb_feature_importance_df = pd.DataFrame(
+        np.c_[
+            features[: len(xgb_feature_importance)],
+            np.array(xgb_feature_importance).reshape(-1, 1),
+        ],
+        columns=["feature", "importance"],
+    )
+
+    # plot feature_importance bar
+    fig = px.bar(
+        xgb_feature_importance_df,
+        x="feature",
+        y="importance",
+        width=1600,
+        height=900,
+    )
+    if path is not None:
+        if plot_save_name is None:
+            fig.write_image(f"{path}/xgb_feature_importance.png")
+        else:
+            fig.write_image(f"{path}/xgb_feature_importance_{plot_save_name}.png")
+
+
 #%% 3D plot of wels
 
 
@@ -62,6 +94,7 @@ def plot_wells_3D(
         las_lat_lon=las_lat_lon,
         num_of_neighbors=num_of_neighbors,
         vertical_anisotropy=vertical_anisotropy,
+        depth_range_weight=depth_range_weight,
     )
 
     # add line connections from all wells to test well
@@ -80,6 +113,7 @@ def plot_wells_3D(
         depth_dict[key][["Lat", "Lon"]] = las_lat_lon[key]
         depth_dict[key]["Las_Name"] = key
 
+        # create connection line data
         if key != las_name_test:
             connect_dict[key] = pd.concat(
                 [
@@ -90,6 +124,7 @@ def plot_wells_3D(
                 axis=0,
             )
 
+        # add enighbor or non-neighbor wells
         if key in neighbors:
             fig.add_traces(
                 go.Scatter3d(
@@ -367,9 +402,22 @@ def plot_logs_columns(
 
         # print(f'col_old: {col_old}, col_new: {col_new}, col_id: {col_id}')
         # if 'TENS' not in col_new:
-        fig.add_trace(
-            go.Scatter(x=df[col_old], y=df.index, name=col_old), row=1, col=col_id
-        )
+        if col_id != num_of_cols:
+            fig.add_trace(
+                go.Scatter(x=df[col_old], y=df.index, name=col_old), row=1, col=col_id
+            )
+        else:
+            fig.add_trace(
+                go.Scatter(
+                    x=df[col_old],
+                    y=df.index,
+                    name=col_old,
+                    mode="markers",
+                    marker=dict(size=1),
+                ),
+                row=1,
+                col=col_id,
+            )
 
     # add predicted DTSM if not None
     if DTSM_pred is not None:
@@ -377,7 +425,7 @@ def plot_logs_columns(
             go.Scatter(
                 x=DTSM_pred["DTSM_Pred"],
                 y=DTSM_pred["Depth"],
-                mode="lines+markers",
+                mode="lines",  # +markers
                 line_color="rgba(255, 0, 0, .7)",
                 name="DTSM_Pred",
             ),
@@ -452,7 +500,7 @@ def plot_crossplot(
 ):
 
     assert len(y_actual) == len(y_predict)
-    rmse_test = mean_squared_error(y_actual, y_predict) ** 0.5
+    rmse_test = mean_squared_error(y_actual, y_predict, squared=False)
     r2_test = r2_score(y_actual, y_predict)
 
     y_pred_act = pd.DataFrame(
@@ -610,8 +658,8 @@ def plot_outliers(
         title=dict(text=title_text),
         width=1200,
         height=1200,
-        xaxis_range=[0, axis_range],
-        yaxis_range=[0, axis_range],
+        xaxis_range=[40, 120],  # "DTCO": [40, 120],
+        yaxis_range=[50, 250],  # "DTSM": [60, 270],
     )
 
     # show and save plot

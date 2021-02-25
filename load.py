@@ -13,9 +13,10 @@ import pandas as pd
 import re
 
 from plot import plot_logs_columns
-from util import read_las, process_las, get_mnemonic
-from load_pickle import alias_dict
+from util import read_las, process_las, get_mnemonic, read_pkl, to_pkl
+from load_pickle import alias_dict, feature_model
 
+assert 1 == 2, "are you sure you want to run this??!!"
 #%% create alias_dict
 
 # df = pd.read_csv("data/grouped_mnemonics_corrected.csv")
@@ -115,7 +116,7 @@ curve_info_to_QC = pd.read_csv("data/curve_info_to_QC.csv")
 with open("data/las_data_DTSM.pickle", "rb") as f:
     las_data_DTSM = pickle.load(f)
 
-# create a new dict
+# create a new dict with QC'd curve, with raw mnemonic names
 las_data_DTSM_QC = dict()
 
 # remove the undesired curves
@@ -188,22 +189,20 @@ with open("data/las_depth.pickle", "wb") as f:
     pickle.dump(las_depth, f)
 
 
-#%% write 107 test files
-with open(f"data/las_data_DTSM_QC.pickle", "rb") as f:
-    las_data_DTSM_QC = pickle.load(f)
+#%% write 100+ test files
+las_data_DTSM_QC = read_pkl(f"data/las_data_DTSM_QC.pickle")
 
 target_mnemonics = ["DTCO", "RHOB", "NPHI", "GR", "RT", "CALI", "PEFZ"]
 
 las_dict = process_las().get_compiled_df_from_las_dict(
-        las_data_dict=las_data_DTSM_QC,
-        target_mnemonics=target_mnemonics,
-        new_mnemonics=['DEPTH'],
-        log_mnemonics=["RT"],
-        strict_input_output=True,        
-        alias_dict=alias_dict,  
-        drop_na=True,              
-        return_dict=True,
-    )
+    las_data_dict=las_data_DTSM_QC,
+    target_mnemonics=target_mnemonics,
+    log_mnemonics=["RT"],
+    strict_input_output=True,
+    alias_dict=alias_dict,
+    drop_na=True,
+    return_dict=True,
+)
 
 test_list = []
 for WellName in las_dict.keys():
@@ -212,3 +211,57 @@ for WellName in las_dict.keys():
 test_list = pd.DataFrame(test_list, columns=["Test LAS"])
 test_list.to_csv("data/test_list.csv", index_label=False)
 
+to_pkl(las_dict, f"data/las_dict/las_dict_7_no_depth.pickle")
+
+# #%% plot all las
+
+# for key in las_data.keys():
+#     plot_logs_columns(
+#         las_data[key],
+#         well_name=key,
+#         plot_show=False,
+#         plot_save_file_name=key,
+#         plot_save_path="plots/plots_las",
+#         plot_save_format=["png", "html"],
+#     )
+
+# #%% plot all las with new QC'd DTSM
+
+# for key in las_data_DTSM_QC.keys():
+#     plot_logs_columns(
+#         las_data_DTSM_QC[key],
+#         well_name=key,
+#         alias_dict=alias_dict,
+#         plot_show=False,
+#         plot_save_file_name=f"{key}_DTSM",
+#         plot_save_path="plots/plots_las_DTSM_QC",
+#         plot_save_format=["png"],
+#     )
+
+
+#%% create data with selected features
+
+# DEPTH is not counted as a feature
+
+
+path = "data/feature_selected_data"
+las_data_DTSM_QC = read_pkl("data/las_data_DTSM_QC.pickle")
+
+for model_name, target_mnemonics in feature_model.items():
+    print(model_name)
+    # train_test_split among depth rows
+    las_dict = process_las().get_compiled_df_from_las_dict(
+        las_data_dict=las_data_DTSM_QC,
+        target_mnemonics=target_mnemonics,
+        log_mnemonics=["RT"],
+        strict_input_output=True,
+        outliers_contamination=0.01,
+        alias_dict=alias_dict,
+        return_dict=True,
+        drop_na=True,
+    )
+
+    # save the las_dict
+    to_pkl(las_dict, f"{path}/las_dict_{model_name}.pickle")
+
+# remove outliers here, possible, despike

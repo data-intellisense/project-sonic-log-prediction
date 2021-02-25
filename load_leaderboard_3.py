@@ -18,13 +18,12 @@ from load_pickle import alias_dict
 path = f"data/leaderboard_3"
 
 las_data = dict()  # raw df in las files
-las_data_TEST = dict()  # cleaned df from las_data
 las_lat_lon_TEST = dict()  # lat and lon of test wells
 las_depth_TEST = dict()  # STRT and STOP depth of test wells
 las_list_TEST = []  # name of the test files
 
 time_start = time.time()
-count_ = 1
+count_ = 11
 for f in glob.glob(f"{path}/*.las"):
 
     # get the file name w/o extension
@@ -74,13 +73,13 @@ to_pkl(las_depth_TEST, f"{path}/las_depth_TEST.pickle")
 print(f"\nSuccessfully loaded total {len(las_data)} las files!")
 print(f"Total run time: {time.time()-time_start: .2f} seconds")
 
-#%% pick the curves from test data
+#%% pick the curves from test data, requires log_QC_input.csv
 
-log_QC_input = pd.read_csv(f"{path}/log_QC_input.csv")
+log_QC_input = pd.read_csv(f"{path}/log_QC_input_3.csv")
 
 # read las_data
 las_data = read_pkl(f"{path}/las_data.pickle")
-
+las_data_TEST = dict()  # cleaned df from las_data
 
 # remove the undesired curves
 temp = log_QC_input[["WellName", "Curves to remove"]]
@@ -120,7 +119,7 @@ for ix, WellName, curves_to_remove in temp.itertuples():
             plot_show=False,
             plot_save_file_name=f"{key}-test-data",
             plot_save_path=path,
-            plot_save_format=["png"],
+            plot_save_format=["png", "html"],
             alias_dict=alias_dict,
         )
 

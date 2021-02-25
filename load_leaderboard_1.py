@@ -165,3 +165,18 @@ for key in las_data_TEST.keys():
 #         plot_save_format=["png", "html"],
 #         alias_dict=alias_dict_test,
 #     )
+
+#%% get the raw las names
+f_list = []
+path = "data/leaderboard_1/rawlas"
+
+count_ = 1
+for f in glob.glob(f"{path}/*.las"):
+    f_name = re.split("[\\\/]", f)[-1][:-4]
+    f_name = f"{count_:0>3}-{f_name}"
+    f_list.append([f_name])
+
+    count_ += 1
+
+f_list = pd.DataFrame(f_list)
+f_list.to_csv(f"{path}/las_rawnames.csv")
