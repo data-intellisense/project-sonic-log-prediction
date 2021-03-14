@@ -876,9 +876,3 @@ class MeanRegressor(BaseEstimator, RegressorMixin):
     def predict(self, X_test):
         # give back the mean of y, in the same length as input X
         return np.ones(len(X_test)) * self.y_bar_
-
-
-# #%% Test data
-# las_name_test = "001-00a60e5cc262_TGS"
-# las_test = "data/las/00a60e5cc262_TGS.las"
-# df_test = read_las(las_test).df()
